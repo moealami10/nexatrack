@@ -154,6 +154,20 @@ services exist:
 - **Time/ETA is a single number.** No traffic, no per-route replanning:
   ETAs are computed once per displayed stop order.
 
+## Hosting (GitHub Pages)
+
+The app deploys automatically to **https://moealami10.github.io/nexatrack/** —
+just push to `main`; `.github/workflows/deploy.yml` runs type-check + tests,
+builds, and publishes via GitHub Pages (Pages is configured with
+`build_type=workflow`).
+
+Because GitHub Pages has no SPA fallback, the deployed bundle is rooted at
+`/nexatrack/` (`vite.config.ts` sets `base`, `main.tsx` uses it as the
+router basename for dev/`preview` compatibility) and the workflow copies
+`index.html` to `404.html` so refreshing a deep link (e.g.
+`/nexatrack/orders`) still renders the app. If you change the repository
+name, update `base` in `vite.config.ts` to `/repo-name/`.
+
 ## Notes
 
 - The production build code-splits the two heaviest pages (Dashboard with
