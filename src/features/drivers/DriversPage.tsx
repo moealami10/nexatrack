@@ -1,11 +1,12 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { autoAssignPendingOrders, isActiveAssignment } from '@/lib/dispatch'
-import { DRIVER_STATUS_LABEL, DRIVER_STATUS_TONE } from '@/lib/status'
+import { driverStatusLabel, DRIVER_STATUS_LABEL_EN, DRIVER_STATUS_TONE } from '@/lib/status'
 import { db, useCollection } from '@/lib/store'
 import type { Driver } from '@/types'
 
@@ -20,6 +21,8 @@ interface Notice {
 }
 
 export default function DriversPage() {
+  // Subscribes to the language so driver status badges update instantly on switch.
+  useTranslation()
   const drivers = useCollection(db.drivers)
   const orders = useCollection(db.orders)
 
@@ -107,7 +110,7 @@ export default function DriversPage() {
                 <div className="flex items-start justify-between gap-2">
                   <h2 className="font-semibold text-slate-900">{driver.name}</h2>
                   <Badge tone={DRIVER_STATUS_TONE[driver.status]}>
-                    {DRIVER_STATUS_LABEL[driver.status]}
+                    {driverStatusLabel(driver.status)}
                   </Badge>
                 </div>
                 <dl className="mt-3 space-y-1 text-sm text-slate-600">
@@ -144,11 +147,11 @@ export default function DriversPage() {
                       db.drivers.update(
                         driver.id,
                         { status: next },
-                        `Set ${driver.name} to ${DRIVER_STATUS_LABEL[next]}`,
+                        `Set ${driver.name} to ${DRIVER_STATUS_LABEL_EN[next]}`,
                       )
                     }}
                   >
-                    Set {DRIVER_STATUS_LABEL[driver.status === 'available' ? 'on_route' : driver.status === 'on_route' ? 'off_duty' : 'available'].toLowerCase()}
+                    Set {DRIVER_STATUS_LABEL_EN[driver.status === 'available' ? 'on_route' : driver.status === 'on_route' ? 'off_duty' : 'available'].toLowerCase()}
                   </Button>
                   <Button variant="secondary" onClick={() => setDriverForm({ mode: 'edit', driver })}>
                     Edit

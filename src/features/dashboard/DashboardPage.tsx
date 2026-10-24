@@ -9,6 +9,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { useTranslation } from 'react-i18next'
 
 import { Badge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -16,11 +17,9 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { StatCard } from '@/components/ui/StatCard'
 import { formatDateTime, formatCurrency } from '@/lib/format'
 import { buildProductIndex, getOrderTotal, summarizeOrderItems } from '@/lib/orders'
-import { ORDER_STATUS_TONE } from '@/lib/status'
+import { ORDER_STATUS_TONE, orderStatusLabel } from '@/lib/status'
 import { db, useCollection } from '@/lib/store'
 import type { OrderStatus } from '@/types'
-
-import { ORDER_STATUS_LABEL } from '@/lib/status'
 
 import { getDashboardStats } from './stats'
 
@@ -35,6 +34,7 @@ const STATUS_COLORS: Record<OrderStatus, string> = {
 }
 
 export default function DashboardPage() {
+  const { t } = useTranslation()
   const products = useCollection(db.products)
   const inventory = useCollection(db.inventory)
   const orders = useCollection(db.orders)
@@ -58,42 +58,46 @@ export default function DashboardPage() {
   // Getting-started checklist: ticks off automatically as data appears,
   // and hides completely once every step is done.
   const steps = [
-    { label: 'Add products', done: products.length > 0, to: '/products' },
-    { label: 'Set stock', done: inventory.some((item) => item.quantity > 0), to: '/inventory' },
-    { label: 'Add drivers', done: drivers.length > 0, to: '/drivers' },
-    { label: 'Create orders', done: orders.length > 0, to: '/orders' },
-    { label: 'Plan routes', done: routePlans.length > 0, to: '/routes' },
+    { label: t('dashboard.stepProducts'), done: products.length > 0, to: '/products' },
+    { label: t('dashboard.stepStock'), done: inventory.some((item) => item.quantity > 0), to: '/inventory' },
+    { label: t('dashboard.stepDrivers'), done: drivers.length > 0, to: '/drivers' },
+    { label: t('dashboard.stepOrders'), done: orders.length > 0, to: '/orders' },
+    { label: t('dashboard.stepRoutes'), done: routePlans.length > 0, to: '/routes' },
   ]
   const allStepsDone = steps.every((step) => step.done)
 
   return (
     <>
       <PageHeader
-        title="Dashboard"
-        description="Overview of your delivery operations in Casablanca."
+        title={t('dashboard.title')}
+        description={t('dashboard.description')}
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon="🧾" label="Orders today" value={ordersToday} accent="sky" />
+        <StatCard icon="🧾" label={t('dashboard.ordersToday')} value={ordersToday} accent="sky" />
         <StatCard
           icon="✅"
-          label="Delivered"
+          label={t('dashboard.delivered')}
           value={`${deliveredPercent}%`}
-          hint={`${deliveredCount} of ${orders.length} orders`}
+          hint={t('dashboard.deliveredHint_other', { delivered: deliveredCount, total: orders.length })}
           accent="emerald"
         />
         <StatCard
           icon="🛵"
-          label="Active drivers"
+          label={t('dashboard.activeDrivers')}
           value={activeDrivers}
-          hint={`${availableDrivers} available`}
+          hint={
+            availableDrivers === 1
+              ? t('dashboard.availableHint_one', { count: availableDrivers })
+              : t('dashboard.availableHint_other', { count: availableDrivers })
+          }
           accent="violet"
         />
         <StatCard
           icon="⚠️"
-          label="Low stock"
+          label={t('dashboard.lowStock')}
           value={lowStockCount}
-          hint="At or below threshold — check Inventory"
+          hint={t('dashboard.lowStockHint')}
           accent="amber"
         />
       </div>
@@ -102,7 +106,7 @@ export default function DashboardPage() {
       {!allStepsDone && (
         <section className="mt-6 rounded-xl border border-sky-200 bg-sky-50 p-5">
           <h2 className="text-sm font-medium uppercase tracking-wide text-sky-700">
-            Getting started
+            {t('dashboard.gettingStarted')}
           </h2>
           <ol className="mt-3 space-y-2">
             {steps.map((step, index) => (
@@ -125,7 +129,7 @@ export default function DashboardPage() {
                 >
                   {step.label}
                 </Link>
-                {step.done && <span className="text-xs text-emerald-600">done</span>}
+                {step.done && <span className="text-xs text-emerald-600">{t('dashboard.stepDone')}</span>}
               </li>
             ))}
           </ol>
@@ -139,7 +143,7 @@ export default function DashboardPage() {
         {/* Orders by status */}
         <section className="min-w-0 rounded-xl border border-slate-200 bg-white p-5 shadow-sm xl:col-span-2">
           <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
-            Orders by status
+            {t('dashboard.ordersByStatus')}
           </h2>
           <div className="mt-4 h-60 min-w-0 overflow-hidden">
             <ResponsiveContainer width="100%" height="100%">
@@ -173,18 +177,18 @@ export default function DashboardPage() {
         <section className="min-w-0 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
-              Latest orders
+              {t('dashboard.latestOrders')}
             </h2>
             <Link
               to="/orders"
               className="text-xs font-medium text-slate-500 transition hover:text-slate-900"
             >
-              View all →
+              {t('dashboard.viewAll')}
             </Link>
           </div>
 
           {latestOrders.length === 0 ? (
-            <EmptyState icon="🧾" message="No orders yet." />
+            <EmptyState icon="🧾" message={t('dashboard.noOrders')} />
           ) : (
             <ul className="mt-2 divide-y divide-slate-100">
               {latestOrders.map((order) => (
@@ -199,7 +203,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="shrink-0 text-right">
                     <Badge tone={ORDER_STATUS_TONE[order.status]}>
-                      {ORDER_STATUS_LABEL[order.status]}
+                      {orderStatusLabel(order.status)}
                     </Badge>
                     <p className="mt-1 text-xs font-medium text-slate-700">
                       {formatCurrency(getOrderTotal(order, productIndex))}

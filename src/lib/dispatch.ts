@@ -1,6 +1,6 @@
 import { mutateOrder } from './orders'
 import { db, runTransaction } from './store'
-import { DRIVER_STATUS_LABEL } from './status'
+import { DRIVER_STATUS_LABEL_EN } from './status'
 import type { DriverStatus, Order } from '@/types'
 
 /** Dispatch helpers: assigning pending orders to drivers, incl. geo clustering. */
@@ -71,7 +71,7 @@ export function syncDriverStatusAfterOrderEvent(
     db.drivers.update(
       driver.id,
       { status: next },
-      `Set ${driver.name} to ${DRIVER_STATUS_LABEL[next]}`,
+      `Set ${driver.name} to ${DRIVER_STATUS_LABEL_EN[next]}`,
     )
   }
 }

@@ -1,16 +1,13 @@
+import { useTranslation } from 'react-i18next'
+
 import { formatDateTime } from '@/lib/format'
 import { historyIndex } from '@/lib/orders'
-import { ORDER_STATUS_LABEL } from '@/lib/status'
+import { orderStatusLabel } from '@/lib/status'
 import type { Order, OrderStatus } from '@/types'
 
-const STEPS = [
-  { status: 'pending', label: ORDER_STATUS_LABEL.pending },
-  { status: 'assigned', label: ORDER_STATUS_LABEL.assigned },
-  { status: 'in_transit', label: ORDER_STATUS_LABEL.in_transit },
-  { status: 'delivered', label: ORDER_STATUS_LABEL.delivered },
-] as const satisfies Array<{ status: OrderStatus; label: string }>
+const STEPS = ['pending', 'assigned', 'in_transit', 'delivered'] as const satisfies readonly OrderStatus[]
 
-type StepStatus = (typeof STEPS)[number]['status']
+type StepStatus = (typeof STEPS)[number]
 
 /** Reached steps are solid in their own color; the current one is outlined. */
 const DONE_DOT: Record<StepStatus, string> = {
@@ -32,9 +29,12 @@ const CURRENT_DOT: Record<StepStatus, string> = {
  * followed by a red/gray terminal node.
  */
 export function StatusTimeline({ order }: { order: Order }) {
+  // Subscribe for instant updates when the language switches; the labels
+  // below come from orderStatusLabel(), which reads the language live.
+  useTranslation()
   const isFailed = order.status === 'failed'
   const isTerminal = isFailed || order.status === 'cancelled'
-  const currentIndex = STEPS.findIndex((step) => step.status === order.status)
+  const currentIndex = STEPS.findIndex((step) => step === order.status)
   const timestamps = historyIndex(order)
   const placedAt = timestamps.get('pending') ?? order.createdAt
 
@@ -46,13 +46,14 @@ export function StatusTimeline({ order }: { order: Order }) {
       ? ['pending']
       : currentIndex < 0
         ? [] // defensive: unknown status shows the plain steps
-        : STEPS.slice(0, currentIndex).map((step) => step.status)
+        : STEPS.slice(0, currentIndex)
 
-  const rows = STEPS.map((step) => ({
-    ...step,
-    at: timestamps.get(step.status),
-    isCurrent: order.status === step.status,
-    isDone: reached.includes(step.status),
+  const rows = STEPS.map((status) => ({
+    status,
+    label: orderStatusLabel(status),
+    at: timestamps.get(status),
+    isCurrent: order.status === status,
+    isDone: reached.includes(status),
   }))
 
   return (

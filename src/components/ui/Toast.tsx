@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { dismissActionToast, getSnapshot, subscribe } from '@/lib/toasts'
 import { history } from '@/lib/store'
@@ -6,6 +7,7 @@ import { history } from '@/lib/store'
 /** Fixed overlay rendering the current action toast; mount once in the shell. */
 export function ToastStack() {
   const toast = useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
+  const { t } = useTranslation()
   if (!toast) return null
 
   return (
@@ -25,13 +27,13 @@ export function ToastStack() {
             }}
             className="rounded-lg px-2.5 py-1.5 text-sm font-semibold text-sky-300 transition hover:bg-slate-800 hover:text-sky-200"
           >
-            ↩ Undo
+            {t('toasts.undoButton')}
           </button>
         )}
         <button
           type="button"
           onClick={dismissActionToast}
-          aria-label="Dismiss notification"
+          aria-label={t('toasts.dismiss')}
           className="rounded-lg px-2.5 py-1.5 text-slate-400 transition hover:bg-slate-800 hover:text-white"
         >
           ✕

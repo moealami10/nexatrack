@@ -1,0 +1,106 @@
+{
+  "common": {
+    "brand": "NexaTrack",
+    "menu": "Menu",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "cancel": "Cancel",
+    "language": "Language",
+    "switchToEnglish": "Switch to English",
+    "switchToFrench": "Passer en français",
+    "loadDemoData": "Load demo data",
+    "clearAllData": "Clear all data",
+    "clearTitle": "Clear all data?",
+    "clearBody": "This permanently deletes all products, inventory, orders, drivers, and route plans, and clears the undo history.",
+    "clearWarning": "This action is NOT undoable.",
+    "clearFieldLabel": "Type DELETE to confirm",
+    "clearPlaceholder": "DELETE",
+    "clearButton": "Delete everything",
+    "demoTitle": "Load demo data?",
+    "demoBody": "Loading the demo dataset replaces everything currently in the app. The load is a single undoable step, so you can revert it afterwards.",
+    "demoButton": "Replace and load demo data"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "products": "Products",
+    "inventory": "Inventory",
+    "orders": "Orders",
+    "drivers": "Drivers",
+    "routes": "Routes"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "description": "Overview of your delivery operations in Casablanca.",
+    "ordersToday": "Orders today",
+    "delivered": "Delivered",
+    "deliveredHint_one": "{{delivered}} of {{total}} order",
+    "deliveredHint_other": "{{delivered}} of {{total}} orders",
+    "activeDrivers": "Active drivers",
+    "availableHint_one": "{{count}} available",
+    "availableHint_other": "{{count}} available",
+    "lowStock": "Low stock",
+    "lowStockHint": "At or below threshold — check Inventory",
+    "gettingStarted": "Getting started",
+    "stepProducts": "Add products",
+    "stepStock": "Set stock",
+    "stepDrivers": "Add drivers",
+    "stepOrders": "Create orders",
+    "stepRoutes": "Plan routes",
+    "stepDone": "done",
+    "ordersByStatus": "Orders by status",
+    "latestOrders": "Latest orders",
+    "viewAll": "View all →",
+    "noOrders": "No orders yet."
+  },
+  "products": {
+    "title": "Products"
+  },
+  "inventory": {
+    "title": "Inventory"
+  },
+  "orders": {
+    "title": "Orders",
+    "chipAll": "All",
+    "count_one": "{{count}} order",
+    "count_other": "{{count}} orders"
+  },
+  "drivers": {
+    "title": "Drivers",
+    "count_one": "{{count}} driver",
+    "count_other": "{{count}} drivers"
+  },
+  "routes": {
+    "title": "Routes"
+  },
+  "status": {
+    "order": {
+      "pending": "Pending",
+      "assigned": "Assigned",
+      "in_transit": "In transit",
+      "delivered": "Delivered",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    },
+    "driver": {
+      "available": "Available",
+      "on_route": "On route",
+      "off_duty": "Off duty"
+    }
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "storageUnavailable": "Local storage is unavailable — your changes will be lost when you leave this page."
+  },
+  "toasts": {
+    "undoButton": "↩ Undo",
+    "dismiss": "Dismiss notification"
+  },
+  "undo": {
+    "undo": "Undo",
+    "redo": "Redo",
+    "tooltipUndo": "Undo: {{action}} (Ctrl+Z)",
+    "tooltipRedo": "Redo: {{action}} (Ctrl+Shift+Z)",
+    "nothingToUndo": "Nothing to undo (Ctrl+Z)",
+    "nothingToRedo": "Nothing to redo (Ctrl+Shift+Z)"
+  }
+}

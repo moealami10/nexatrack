@@ -1,0 +1,106 @@
+{
+  "common": {
+    "brand": "NexaTrack",
+    "menu": "Menu",
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu",
+    "cancel": "Annuler",
+    "language": "Langue",
+    "switchToEnglish": "Switch to English",
+    "switchToFrench": "Passer en français",
+    "loadDemoData": "Charger les données de démonstration",
+    "clearAllData": "Effacer toutes les données",
+    "clearTitle": "Effacer toutes les données ?",
+    "clearBody": "Cette action supprime définitivement tous les produits, le stock, les commandes, les livreurs et les tournées, et efface l'historique des modifications.",
+    "clearWarning": "Cette action est irréversible.",
+    "clearFieldLabel": "Saisissez DELETE pour confirmer",
+    "clearPlaceholder": "DELETE",
+    "clearButton": "Tout supprimer",
+    "demoTitle": "Charger les données de démonstration ?",
+    "demoBody": "Le chargement du jeu de données de démonstration remplace l'ensemble du contenu actuel de l'application. Il s'agit d'une seule opération annulable : vous pourrez revenir en arrière ensuite.",
+    "demoButton": "Remplacer et charger les données de démonstration"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "products": "Produits",
+    "inventory": "Stock",
+    "orders": "Commandes",
+    "drivers": "Livreurs",
+    "routes": "Tournées"
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "description": "Vue d'ensemble de vos opérations de livraison à Casablanca.",
+    "ordersToday": "Commandes du jour",
+    "delivered": "Livrées",
+    "deliveredHint_one": "{{delivered}} sur {{total}} commande",
+    "deliveredHint_other": "{{delivered}} sur {{total}} commandes",
+    "activeDrivers": "Livreurs actifs",
+    "availableHint_one": "{{count}} disponible",
+    "availableHint_other": "{{count}} disponibles",
+    "lowStock": "Stock faible",
+    "lowStockHint": "Au seuil ou en dessous — vérifiez le Stock",
+    "gettingStarted": "Prise en main",
+    "stepProducts": "Ajouter des produits",
+    "stepStock": "Définir le stock",
+    "stepDrivers": "Ajouter des livreurs",
+    "stepOrders": "Créer des commandes",
+    "stepRoutes": "Planifier des tournées",
+    "stepDone": "terminé",
+    "ordersByStatus": "Commandes par statut",
+    "latestOrders": "Dernières commandes",
+    "viewAll": "Tout voir →",
+    "noOrders": "Aucune commande pour le moment."
+  },
+  "products": {
+    "title": "Produits"
+  },
+  "inventory": {
+    "title": "Stock"
+  },
+  "orders": {
+    "title": "Commandes",
+    "chipAll": "Tout",
+    "count_one": "{{count}} commande",
+    "count_other": "{{count}} commandes"
+  },
+  "drivers": {
+    "title": "Livreurs",
+    "count_one": "{{count}} livreur",
+    "count_other": "{{count}} livreurs"
+  },
+  "routes": {
+    "title": "Tournées"
+  },
+  "status": {
+    "order": {
+      "pending": "En attente",
+      "assigned": "Affectée",
+      "in_transit": "En cours de livraison",
+      "delivered": "Livrée",
+      "failed": "Échouée",
+      "cancelled": "Annulée"
+    },
+    "driver": {
+      "available": "Disponible",
+      "on_route": "En tournée",
+      "off_duty": "Hors service"
+    }
+  },
+  "errors": {
+    "generic": "Une erreur est survenue. Veuillez réessayer.",
+    "storageUnavailable": "Le stockage local est indisponible — vos modifications seront perdues en quittant cette page."
+  },
+  "toasts": {
+    "undoButton": "↩ Annuler",
+    "dismiss": "Masquer la notification"
+  },
+  "undo": {
+    "undo": "Annuler",
+    "redo": "Rétablir",
+    "tooltipUndo": "Annuler : {{action}} (Ctrl+Z)",
+    "tooltipRedo": "Rétablir : {{action}} (Ctrl+Shift+Z)",
+    "nothingToUndo": "Rien à annuler (Ctrl+Z)",
+    "nothingToRedo": "Rien à rétablir (Ctrl+Shift+Z)"
+  }
+}

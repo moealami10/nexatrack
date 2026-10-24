@@ -63,6 +63,41 @@ full-state snapshots (products, inventory, orders, drivers, route plans):
   and fail/cancel (status + stock return) each undo in a single step.
 - **Limit**: the 50 most recent snapshots are kept; history itself lives
   in memory only (it is never persisted and clears on reload).
+- **Language labels**: store-level action labels (the sentences in the
+  toasts and undo tooltips, e.g. *Added product Milk*) are English-only
+  for now; the undo/redo tooltip *chrome* around them is translated.
+  Translating the generated sentences is a planned pass (they will move
+  to translation keys rendered at display time).
+
+## Languages (EN / FR)
+
+The UI is bilingual (English / French) via `react-i18next`, translations
+in `src/i18n/locales/{en,fr}.json`, organized by feature section
+(`nav`, `dashboard`, `status`, `undo`, …):
+
+- **Switch**: compact `EN | FR` segmented control in the top bar, next to
+  undo/redo — the whole UI re-renders instantly, no reload.
+- **Persistence**: your choice is saved in `localStorage` under
+  `nexatrack:v3:lang` and wins over the browser language; without a saved
+  choice the browser locale is used when it starts with `fr`, otherwise
+  English. `<html lang>` always follows the active language.
+- **Formatting**: dates, numbers and currency use `Intl` for the active
+  locale — French shows `1 234,50 MAD` and `24 oct. 2026, 12:03`
+  (`src/lib/format.ts`). The currency stays MAD in both languages.
+  Internal "today" keys are locale-invariant so comparisons cannot break
+  mid-session.
+- **Pluralization**: i18next plural keys (`count_one`/`count_other`),
+  e.g. *1 order / 2 orders* — French correctly puts 0 inside the "one"
+  category (*0 commande*).
+- **Converted so far**: sidebar, top bar (+ undo/redo tooltips), the
+  Dashboard, status badges/labels everywhere (`lib/status.ts`), the toast
+  frame, and modal/dialog chrome in the shell. The remaining pages
+  (Products, Inventory, Orders internals, Drivers internals, Routes) keep
+  English strings until their conversion pass — their data-layer labels,
+  however, are already status-translated.
+- **Tests**: `src/i18n/parity.test.ts` fails when `en.json` and `fr.json`
+  diverge in keys; `src/i18n/language.test.ts` covers detection order,
+  persistence after a simulated reload, and the `<html lang>` sync.
 
 No confirm dialogs: destructive actions (e.g. deleting a product, which
 also removes its inventory row) act immediately — the toast's Undo button

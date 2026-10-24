@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -25,7 +26,7 @@ import {
 } from '@/lib/routing'
 import { getDistanceMatrix, getRouteGeometry } from '@/lib/roadRouting'
 import { db, runTransaction, useCollection } from '@/lib/store'
-import { DRIVER_STATUS_LABEL, DRIVER_STATUS_TONE } from '@/lib/status'
+import { driverStatusLabel, DRIVER_STATUS_TONE } from '@/lib/status'
 import type { Order } from '@/types'
 
 import RouteMap from './RouteMap'
@@ -46,6 +47,8 @@ function stopOf(order: Order): Stop {
 }
 
 export default function RoutesPage() {
+  // Subscribes to the language so the driver status badge updates instantly on switch.
+  useTranslation()
   const drivers = useCollection(db.drivers)
   const orders = useCollection(db.orders)
   const routePlans = useCollection(db.routePlans)
@@ -301,7 +304,7 @@ export default function RoutesPage() {
               <div className="mb-3 flex items-center justify-between gap-2">
                 <h2 className="font-semibold text-slate-900">{driver.name}</h2>
                 <Badge tone={DRIVER_STATUS_TONE[driver.status]}>
-                  {DRIVER_STATUS_LABEL[driver.status]}
+                  {driverStatusLabel(driver.status)}
                 </Badge>
               </div>
               <p className="text-sm text-slate-500">{driver.vehicle}</p>

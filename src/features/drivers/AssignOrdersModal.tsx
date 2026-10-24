@@ -1,14 +1,17 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/Button'
 import { Field, inputClasses } from '@/components/ui/Field'
 import { Modal } from '@/components/ui/Modal'
 import { assignOrders } from '@/lib/dispatch'
 import { db, useCollection } from '@/lib/store'
-import { DRIVER_STATUS_LABEL } from '@/lib/status'
+import { driverStatusLabel } from '@/lib/status'
 
 /** Pick several pending orders and hand them to one driver. */
 export default function AssignOrdersModal({ onClose }: { onClose: () => void }) {
+  // Subscribes to the language so status badges update instantly on switch.
+  useTranslation()
   const orders = useCollection(db.orders)
   const drivers = useCollection(db.drivers)
 
@@ -113,7 +116,7 @@ export default function AssignOrdersModal({ onClose }: { onClose: () => void }) 
                   <option value="">— Choose a driver —</option>
                   {availableDrivers.map((driver) => (
                     <option key={driver.id} value={driver.id}>
-                      {driver.name} ({DRIVER_STATUS_LABEL[driver.status]})
+                      {driver.name} ({driverStatusLabel(driver.status)})
                     </option>
                   ))}
                 </select>

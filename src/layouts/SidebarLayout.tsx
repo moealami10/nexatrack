@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { Menu, Redo2, Undo2, type LucideIcon } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
+import { LanguageSwitch } from '@/components/ui/LanguageSwitch'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Field, inputClasses } from '@/components/ui/Field'
@@ -9,21 +11,25 @@ import { ToastStack } from '@/components/ui/Toast'
 import { installDemoData } from '@/lib/demoData'
 import { clearAllData, db, history, useCollection, useHistory } from '@/lib/store'
 
-type NavItem = { to: string; label: string; icon: string }
+type NavItem = { to: string; navKey: string; icon: string }
 
 const NAV_ITEMS: NavItem[] = [
-  { to: '/dashboard', label: 'Dashboard', icon: '📊' },
-  { to: '/products', label: 'Products', icon: '📦' },
-  { to: '/inventory', label: 'Inventory', icon: '🗃️' },
-  { to: '/orders', label: 'Orders', icon: '🧾' },
-  { to: '/drivers', label: 'Drivers', icon: '🛵' },
-  { to: '/routes', label: 'Routes', icon: '🗺️' },
+  { to: '/dashboard', navKey: 'dashboard', icon: '📊' },
+  { to: '/products', navKey: 'products', icon: '📦' },
+  { to: '/inventory', navKey: 'inventory', icon: '🗃️' },
+  { to: '/orders', navKey: 'orders', icon: '🧾' },
+  { to: '/drivers', navKey: 'drivers', icon: '🛵' },
+  { to: '/routes', navKey: 'routes', icon: '🗺️' },
 ]
+
+function navLabel(item: NavItem): string {
+  return `nav.${item.navKey}`
+}
 
 /** Breadcrumb label for the active route (both "/" and "/dashboard"). */
 function currentPageLabel(pathname: string): string {
   const item = NAV_ITEMS.find((entry) => entry.to === pathname)
-  return item?.label ?? 'Dashboard'
+  return item ? navLabel(item) : 'nav.dashboard'
 }
 
 function Brand() {
@@ -36,6 +42,7 @@ function Brand() {
 }
 
 function SidebarNav({ onNavigate }: { onNavigate: () => void }) {
+  const { t } = useTranslation()
   return (
     <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
       {NAV_ITEMS.map((item) => (
@@ -52,7 +59,7 @@ function SidebarNav({ onNavigate }: { onNavigate: () => void }) {
           }
         >
           <span aria-hidden="true">{item.icon}</span>
-          {item.label}
+          {t(navLabel(item))}
         </NavLink>
       ))}
     </nav>
@@ -61,29 +68,27 @@ function SidebarNav({ onNavigate }: { onNavigate: () => void }) {
 
 /** Confirmation modal for "Clear all data" — requires typing DELETE. */
 function ClearDataModal({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation()
   const [confirmation, setConfirmation] = useState('')
   const armed = confirmation.trim() === 'DELETE'
   return (
-    <Modal title="Clear all data?" onClose={onClose}>
-      <p className="text-sm text-slate-600">
-        This permanently deletes all products, inventory, orders, drivers, and
-        route plans, and clears the undo history.
-      </p>
+    <Modal title={t('common.clearTitle')} onClose={onClose}>
+      <p className="text-sm text-slate-600">{t('common.clearBody')}</p>
       <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700 ring-1 ring-inset ring-red-600/20">
-        This action is NOT undoable.
+        {t('common.clearWarning')}
       </p>
-      <Field label="Type DELETE to confirm">
+      <Field label={t('common.clearFieldLabel')}>
         <input
           value={confirmation}
           onChange={(event) => setConfirmation(event.target.value)}
-          placeholder="DELETE"
+          placeholder={t('common.clearPlaceholder')}
           className={inputClasses}
           autoFocus
         />
       </Field>
       <div className="flex justify-end gap-2">
         <Button variant="secondary" onClick={onClose}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button
           variant="danger"
@@ -93,7 +98,7 @@ function ClearDataModal({ onClose }: { onClose: () => void }) {
             onClose()
           }}
         >
-          Delete everything
+          {t('common.clearButton')}
         </Button>
       </div>
     </Modal>
@@ -102,15 +107,13 @@ function ClearDataModal({ onClose }: { onClose: () => void }) {
 
 /** Confirmation modal shown when demo data would replace existing data. */
 function LoadDemoConfirmModal({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation()
   return (
-    <Modal title="Load demo data?" onClose={onClose}>
-      <p className="text-sm text-slate-600">
-        Loading the demo dataset replaces everything currently in the app.
-        The load is a single undoable step, so you can revert it afterwards.
-      </p>
+    <Modal title={t('common.demoTitle')} onClose={onClose}>
+      <p className="text-sm text-slate-600">{t('common.demoBody')}</p>
       <div className="flex justify-end gap-2">
         <Button variant="secondary" onClick={onClose}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button
           onClick={() => {
@@ -118,7 +121,7 @@ function LoadDemoConfirmModal({ onClose }: { onClose: () => void }) {
             onClose()
           }}
         >
-          Replace and load demo data
+          {t('common.demoButton')}
         </Button>
       </div>
     </Modal>
@@ -126,6 +129,7 @@ function LoadDemoConfirmModal({ onClose }: { onClose: () => void }) {
 }
 
 function SidebarFooter() {
+  const { t } = useTranslation()
   const products = useCollection(db.products)
   const inventory = useCollection(db.inventory)
   const orders = useCollection(db.orders)
@@ -155,14 +159,14 @@ function SidebarFooter() {
           onClick={handleLoadDemo}
           className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-400 transition hover:bg-slate-800/50 hover:text-white"
         >
-          📥 Load demo data
+          📥 {t('common.loadDemoData')}
         </button>
         <button
           type="button"
           onClick={() => setConfirmClear(true)}
           className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-400 transition hover:bg-red-900/40 hover:text-red-300"
         >
-          🗑️ Clear all data
+          🗑️ {t('common.clearAllData')}
         </button>
       </div>
       {confirmClear && <ClearDataModal onClose={() => setConfirmClear(false)} />}
@@ -208,29 +212,30 @@ function HistoryButton({
 }
 
 function HistoryControls() {
+  const { t } = useTranslation()
   const { canUndo, canRedo, lastAction, redoAction, undo, redo } = useHistory()
   return (
     <div className="flex items-center gap-2">
       <HistoryButton
         icon={Undo2}
-        label="Undo"
+        label={t('undo.undo')}
         onClick={undo}
         disabled={!canUndo}
         tip={
           canUndo && lastAction
-            ? `Undo: ${lastAction} (Ctrl+Z)`
-            : 'Nothing to undo (Ctrl+Z)'
+            ? t('undo.tooltipUndo', { action: lastAction })
+            : t('undo.nothingToUndo')
         }
       />
       <HistoryButton
         icon={Redo2}
-        label="Redo"
+        label={t('undo.redo')}
         onClick={redo}
         disabled={!canRedo}
         tip={
           canRedo && redoAction
-            ? `Redo: ${redoAction} (Ctrl+Shift+Z)`
-            : 'Nothing to redo (Ctrl+Shift+Z)'
+            ? t('undo.tooltipRedo', { action: redoAction })
+            : t('undo.nothingToRedo')
         }
       />
     </div>
@@ -244,9 +249,10 @@ function HistoryControls() {
  * trigger; below 640px the history buttons collapse to icons only.
  */
 export default function SidebarLayout() {
+  const { t } = useTranslation()
   const [menuOpen, setMenuOpen] = useState(false)
   const { pathname } = useLocation()
-  const pageLabel = currentPageLabel(pathname)
+  const pageLabel = t(currentPageLabel(pathname))
 
   // Global keyboard shortcuts; skipped inside text fields so normal text
   // undo keeps working.
@@ -289,15 +295,16 @@ export default function SidebarLayout() {
             <button
               type="button"
               onClick={() => setMenuOpen(true)}
-              aria-label="Open menu"
+              aria-label={t('common.openMenu')}
               className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 md:hidden"
             >
               <Menu size={20} strokeWidth={2} aria-hidden="true" />
             </button>
             <span className="truncate text-sm font-medium text-slate-500">{pageLabel}</span>
           </div>
-          <div className="flex shrink-0 items-center">
+          <div className="flex shrink-0 items-center gap-2">
             <HistoryControls />
+            <LanguageSwitch />
           </div>
         </header>
 
@@ -315,11 +322,11 @@ export default function SidebarLayout() {
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex h-14 shrink-0 items-center justify-between border-b border-slate-800 px-4">
-              <span className="font-semibold tracking-tight text-white">Menu</span>
+              <span className="font-semibold tracking-tight text-white">{t('common.menu')}</span>
               <button
                 type="button"
                 onClick={() => setMenuOpen(false)}
-                aria-label="Close menu"
+                aria-label={t('common.closeMenu')}
                 className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white"
               >
                 ✕

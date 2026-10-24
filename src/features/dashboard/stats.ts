@@ -1,5 +1,5 @@
 import { currentDayKey, localDayKey } from '@/lib/format'
-import { ORDER_STATUS_LABEL } from '@/lib/status'
+import { orderStatusLabel } from '@/lib/status'
 import type { Driver, InventoryItem, Order, OrderStatus } from '@/types'
 
 /**
@@ -55,9 +55,11 @@ export function getDashboardStats(input: DashboardInput): DashboardStats {
     (item) => item.quantity <= item.lowStockThreshold,
   ).length
 
+  // Translated at compute time; components re-render on language change
+  // and recompute these anyway.
   const chartData = ORDER_STATUSES.map((status) => ({
     status,
-    name: ORDER_STATUS_LABEL[status],
+    name: orderStatusLabel(status),
     count: orders.filter((order) => order.status === status).length,
   }))
 

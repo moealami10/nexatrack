@@ -13,9 +13,11 @@ import {
   markOrderFailed,
   reactivateOrder,
 } from '@/lib/orders'
-import { DRIVER_STATUS_LABEL, ORDER_STATUS_LABEL } from '@/lib/status'
+import { driverStatusLabel, orderStatusLabel } from '@/lib/status'
 import { db, useCollection } from '@/lib/store'
 import type { OrderStatus } from '@/types'
+
+import { useTranslation } from 'react-i18next'
 
 import { StatusTimeline } from './StatusTimeline'
 
@@ -28,6 +30,8 @@ export default function OrderDetailDrawer({
   orderId: string
   onClose: () => void
 }) {
+  // Subscribes to the language so the status badge updates instantly on switch.
+  useTranslation()
   const orders = useCollection(db.orders)
   const drivers = useCollection(db.drivers)
   const products = useCollection(db.products)
@@ -73,7 +77,7 @@ export default function OrderDetailDrawer({
     <Drawer title={`Order ${order.id}`} onClose={onClose}>
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-slate-900">{order.customerName}</h3>
-        <Badge>{ORDER_STATUS_LABEL[order.status]}</Badge>
+        <Badge>{orderStatusLabel(order.status)}</Badge>
       </div>
       <p className="mt-1 text-sm text-slate-500">{order.address}</p>
       <p className="text-xs text-slate-400">
@@ -110,7 +114,7 @@ export default function OrderDetailDrawer({
             <option value="">— Unassigned —</option>
             {candidates.map((driver) => (
               <option key={driver.id} value={driver.id}>
-                {driver.name} ({DRIVER_STATUS_LABEL[driver.status]})
+                {driver.name} ({driverStatusLabel(driver.status)})
               </option>
             ))}
           </select>

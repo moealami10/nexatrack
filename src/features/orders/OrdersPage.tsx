@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -8,7 +9,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { Table, Td } from '@/components/ui/Table'
 import { formatDate, formatCurrency } from '@/lib/format'
 import { buildProductIndex, getOrderTotal, summarizeOrderItems } from '@/lib/orders'
-import { ORDER_STATUS_LABEL, ORDER_STATUS_TONE } from '@/lib/status'
+import { ORDER_STATUS_TONE, orderStatusLabel } from '@/lib/status'
 import { db, useCollection } from '@/lib/store'
 import type { OrderStatus } from '@/types'
 
@@ -18,6 +19,8 @@ import OrderDetailDrawer from './OrderDetailDrawer'
 type Filter = 'all' | OrderStatus
 
 export default function OrdersPage() {
+  // Subscribes to the language so status chips re-render instantly on switch.
+  const { t } = useTranslation()
   const orders = useCollection(db.orders)
   const drivers = useCollection(db.drivers)
   const products = useCollection(db.products)
@@ -48,13 +51,13 @@ export default function OrdersPage() {
     status === 'all' ? orders.length : orders.filter((order) => order.status === status).length
 
   const chips: Array<{ key: Filter; label: string }> = [
-    { key: 'all', label: 'All' },
-    { key: 'pending', label: ORDER_STATUS_LABEL.pending },
-    { key: 'assigned', label: ORDER_STATUS_LABEL.assigned },
-    { key: 'in_transit', label: ORDER_STATUS_LABEL.in_transit },
-    { key: 'delivered', label: ORDER_STATUS_LABEL.delivered },
-    { key: 'failed', label: ORDER_STATUS_LABEL.failed },
-    { key: 'cancelled', label: ORDER_STATUS_LABEL.cancelled },
+    { key: 'all', label: t('orders.chipAll') },
+    { key: 'pending', label: orderStatusLabel('pending') },
+    { key: 'assigned', label: orderStatusLabel('assigned') },
+    { key: 'in_transit', label: orderStatusLabel('in_transit') },
+    { key: 'delivered', label: orderStatusLabel('delivered') },
+    { key: 'failed', label: orderStatusLabel('failed') },
+    { key: 'cancelled', label: orderStatusLabel('cancelled') },
   ]
 
   return (
@@ -158,7 +161,7 @@ export default function OrdersPage() {
               <Td className="text-slate-500">{driverName(order.driverId)}</Td>
               <Td>
                 <Badge tone={ORDER_STATUS_TONE[order.status]}>
-                  {ORDER_STATUS_LABEL[order.status]}
+                  {orderStatusLabel(order.status)}
                 </Badge>
               </Td>
               <Td className="text-slate-500">{formatDate(order.createdAt)}</Td>

@@ -5,6 +5,15 @@ import type { Driver, InventoryItem, Order } from '@/types'
 
 import type { DashboardStats } from './stats'
 
+const DAY_PAD = (value: number) => String(value).padStart(2, '0')
+
+/** Today's local date as an ISO timestamp, computed at runtime — the
+ * fixture date must never be hardcoded, or the suite breaks at midnight. */
+function todayIso(time: string): string {
+  const now = new Date()
+  return `${now.getFullYear()}-${DAY_PAD(now.getMonth() + 1)}-${DAY_PAD(now.getDate())}T${time}:00`
+}
+
 /** Minimal fixtures — dashboard math only touches the shown fields. */
 function mkOrder(status: Order['status'], createdAt: string): Order {
   return {
@@ -43,8 +52,8 @@ describe('getDashboardStats', () => {
 
   it('computes 50% delivered with one delivered order of two', () => {
     const orders: Order[] = [
-      mkOrder('delivered', '2026-10-24T08:00:00'),
-      mkOrder('pending', '2026-10-24T09:00:00'),
+      mkOrder('delivered', todayIso('08:00')),
+      mkOrder('pending', todayIso('09:00')),
     ]
 
     const stats = getDashboardStats({ ...EMPTY_INPUT, orders })
