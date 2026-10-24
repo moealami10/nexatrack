@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { translateAction } from './actionLabel'
+
 /**
  * Empty-start behavior: the app ships with no data; the demo dataset only
  * enters via the explicit `installDemoData()` action (sidebar "Load demo
@@ -53,9 +55,9 @@ describe('demo data install', () => {
     demoData.installDemoData()
 
     expect(history.stats().undoCount).toBe(1)
-    expect(history.undoLabel() ?? '').toContain('Loaded demo data')
-    expect(history.undoLabel() ?? '').toContain('products')
-    expect(history.undoLabel() ?? '').toContain('drivers')
+    expect(translateAction(history.undoLabel() ?? undefined)).toContain('Loaded demo data')
+    expect(translateAction(history.undoLabel() ?? undefined)).toContain('products')
+    expect(translateAction(history.undoLabel() ?? undefined)).toContain('drivers')
 
     expect(db.products.all().length).toBeGreaterThan(0)
     expect(db.inventory.all().length).toBe(db.products.all().length)

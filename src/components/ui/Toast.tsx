@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { translateAction } from '@/lib/actionLabel'
 import { dismissActionToast, getSnapshot, subscribe } from '@/lib/toasts'
 import { history } from '@/lib/store'
 
@@ -16,7 +17,7 @@ export function ToastStack() {
       role="status"
       className="animate-toast-in fixed bottom-4 right-4 z-[70] flex max-w-[calc(100vw-2rem)] items-center gap-2 rounded-xl bg-slate-900 py-3 pl-4 pr-2 text-white shadow-xl"
     >
-      <p className="text-sm leading-5">{toast.label}</p>
+      <p className="text-sm leading-5">{translateAction(toast.label)}</p>
       <div className="ml-1 flex shrink-0 items-center">
         {toast.undoable && (
           <button

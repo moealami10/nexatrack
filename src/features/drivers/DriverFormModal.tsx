@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/Button'
 import { Field, inputClasses } from '@/components/ui/Field'
@@ -15,6 +16,7 @@ export default function DriverFormModal({
   driver: Driver | null
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   const [name, setName] = useState(driver?.name ?? '')
   const [phone, setPhone] = useState(driver?.phone ?? '')
   const [vehicle, setVehicle] = useState(driver?.vehicle ?? '')
@@ -28,7 +30,7 @@ export default function DriverFormModal({
     const trimmedPhone = phone.trim()
     const trimmedVehicle = vehicle.trim()
     if (!trimmedName) {
-      setError('The driver needs a name.')
+      setError(t('errors.driverNameRequired'))
       return
     }
 
@@ -40,7 +42,7 @@ export default function DriverFormModal({
           phone: trimmedPhone,
           vehicle: trimmedVehicle,
         },
-        `Updated driver ${trimmedName}`,
+        { key: 'actions.updatedDriver', params: { name: trimmedName } },
       )
     } else {
       db.drivers.add(
@@ -51,50 +53,52 @@ export default function DriverFormModal({
           vehicle: trimmedVehicle || '—',
           status: 'available',
         },
-        `Added driver ${trimmedName}`,
+        { key: 'actions.addedDriver', params: { name: trimmedName } },
       )
     }
     onClose()
   }
 
   return (
-    <Modal title={driver ? 'Edit driver' : 'Add driver'} onClose={onClose}>
+    <Modal title={driver ? t('drivers.formTitleEdit') : t('drivers.formTitleAdd')} onClose={onClose}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {error && (
           <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-inset ring-red-300">
             {error}
           </p>
         )}
-        <Field label="Name">
+        <Field label={t('drivers.fieldName')}>
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="Amine Sbai"
+            placeholder={t('drivers.placeholderName')}
             className={inputClasses}
             autoFocus
           />
         </Field>
-        <Field label="Phone">
+        <Field label={t('drivers.fieldPhone')}>
           <input
             value={phone}
             onChange={(event) => setPhone(event.target.value)}
-            placeholder="+212 6 61 00 00 00"
+            placeholder={t('drivers.placeholderPhone')}
             className={inputClasses}
           />
         </Field>
-        <Field label="Vehicle">
+        <Field label={t('drivers.fieldVehicle')}>
           <input
             value={vehicle}
             onChange={(event) => setVehicle(event.target.value)}
-            placeholder="Renault Kangoo — 1234-A-56"
+            placeholder={t('drivers.placeholderVehicle')}
             className={inputClasses}
           />
         </Field>
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </Button>
-          <Button type="submit">{driver ? 'Save changes' : 'Add driver'}</Button>
+          <Button type="submit">
+            {driver ? t('common.saveChanges') : t('drivers.addDriver')}
+          </Button>
         </div>
       </form>
     </Modal>

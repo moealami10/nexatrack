@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest'
 
 import { installDemoData } from './demoData'
+import { translateAction } from './actionLabel'
 import type { Order, Product } from '@/types'
 
 import { assignOrders, autoAssignPendingOrders } from './dispatch'
@@ -67,7 +68,7 @@ describe('undo/redo history', () => {
     expect(tryCreateOrder(draft).ok).toBe(true)
     // Stock deduction + order must be a single history entry.
     expect(history.stats().undoCount - statsBefore.undoCount).toBe(1)
-    expect(history.undoLabel()).toBe('Created order for Undo Buyer')
+    expect(translateAction(history.undoLabel()!)).toBe('Created order for Undo Buyer')
 
     expect(
       db.inventory.all().find((entry) => entry.productId === inventoryRow.productId)!
@@ -152,7 +153,7 @@ describe('undo/redo history', () => {
     expect(assigned).toBe(pendingIds.length)
     // N mutateOrder calls collapse into one entry.
     expect(history.stats().undoCount - statsBefore.undoCount).toBe(1)
-    expect(history.undoLabel()).toBe(
+    expect(translateAction(history.undoLabel()!)).toBe(
       `Assigned ${assigned} order${assigned === 1 ? '' : 's'} to ${driver.name}`,
     )
 
@@ -171,8 +172,9 @@ describe('undo/redo history', () => {
     const result = autoAssignPendingOrders()
     expect(result.ok).toBe(true)
     expect(history.stats().undoCount - statsBefore.undoCount).toBe(1)
-    expect(history.undoLabel()).toBe(
-      `Auto-assigned ${result.assigned} orders across ${result.driversUsed} drivers`,
+    // Nested plural keys: "Auto-assigned 2 orders across 2 drivers".
+    expect(translateAction(history.undoLabel()!)).toBe(
+      `Auto-assigned ${result.assigned} order${result.assigned === 1 ? '' : 's'} across ${result.driversUsed} driver${result.driversUsed === 1 ? '' : 's'}`,
     )
 
     history.undo()

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -14,6 +15,7 @@ import ProductFormModal from './ProductFormModal'
 type FormState = { mode: 'add' } | { mode: 'edit'; product: Product } | null
 
 export default function ProductsPage() {
+  const { t } = useTranslation()
   const products = useCollection(db.products)
   const inventory = useCollection(db.inventory)
 
@@ -31,24 +33,27 @@ export default function ProductsPage() {
   )
 
   function handleDelete(product: Product) {
-    db.products.remove(product.id, `Deleted product ${product.name}`)
+    db.products.remove(product.id, {
+      key: 'actions.deletedProduct',
+      params: { name: product.name },
+    })
     db.inventory.remove(product.id)
   }
 
   return (
     <>
       <PageHeader
-        title="Products"
-        description="Catalog of everything you deliver."
+        title={t('products.title')}
+        description={t('products.description')}
         actions={
           <>
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search by name or SKU…"
+              placeholder={t('products.searchPlaceholder')}
               className={`${inputClasses} w-full sm:w-56`}
             />
-            <Button onClick={() => setForm({ mode: 'add' })}>+ Add product</Button>
+            <Button onClick={() => setForm({ mode: 'add' })}>{t('products.addProduct')}</Button>
           </>
         }
       />
@@ -56,13 +61,24 @@ export default function ProductsPage() {
       {products.length === 0 ? (
         <EmptyState
           icon="📦"
-          message="No products yet. Add your first one."
-          action={<Button onClick={() => setForm({ mode: 'add' })}>+ Add product</Button>}
+          message={t('products.emptyMessage')}
+          action={
+            <Button onClick={() => setForm({ mode: 'add' })}>{t('products.addProduct')}</Button>
+          }
         />
       ) : visibleProducts.length === 0 ? (
-        <EmptyState icon="🔍" message={`No products match "${search}".`} />
+        <EmptyState icon="🔍" message={t('products.noMatch', { query: search.trim() })} />
       ) : (
-        <Table columns={['SKU', 'Name', 'Unit', 'Price', 'Stock', 'Actions']}>
+        <Table
+          columns={[
+            t('products.columnSku'),
+            t('products.columnName'),
+            t('products.columnUnit'),
+            t('products.columnPrice'),
+            t('products.columnStock'),
+            t('products.columnActions'),
+          ]}
+        >
           {visibleProducts.map((product) => {
             const stock = stockFor(product.id)
             return (
@@ -75,10 +91,10 @@ export default function ProductsPage() {
                 <Td className="text-right">
                   <div className="flex justify-end gap-2">
                     <Button variant="secondary" onClick={() => setForm({ mode: 'edit', product })}>
-                      Edit
+                      {t('common.edit')}
                     </Button>
                     <Button variant="danger" onClick={() => handleDelete(product)}>
-                      Delete
+                      {t('common.delete')}
                     </Button>
                   </div>
                 </Td>

@@ -8,6 +8,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Field, inputClasses } from '@/components/ui/Field'
 import { ToastStack } from '@/components/ui/Toast'
+import { translateAction } from '@/lib/actionLabel'
 import { installDemoData } from '@/lib/demoData'
 import { clearAllData, db, history, useCollection, useHistory } from '@/lib/store'
 
@@ -223,7 +224,7 @@ function HistoryControls() {
         disabled={!canUndo}
         tip={
           canUndo && lastAction
-            ? t('undo.tooltipUndo', { action: lastAction })
+            ? t('undo.tooltipUndo', { action: translateAction(lastAction) })
             : t('undo.nothingToUndo')
         }
       />
@@ -234,7 +235,7 @@ function HistoryControls() {
         disabled={!canRedo}
         tip={
           canRedo && redoAction
-            ? t('undo.tooltipRedo', { action: redoAction })
+            ? t('undo.tooltipRedo', { action: translateAction(redoAction) })
             : t('undo.nothingToRedo')
         }
       />

@@ -5,10 +5,15 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { translateAction, type ActionLabel } from '@/lib/actionLabel'
 import { autoAssignPendingOrders, isActiveAssignment } from '@/lib/dispatch'
-import { driverStatusLabel, DRIVER_STATUS_LABEL_EN, DRIVER_STATUS_TONE } from '@/lib/status'
+import {
+  DRIVER_STATUS_KEYS,
+  driverStatusLabel,
+  DRIVER_STATUS_TONE,
+} from '@/lib/status'
 import { db, useCollection } from '@/lib/store'
-import type { Driver } from '@/types'
+import type { Driver, DriverStatus } from '@/types'
 
 import AssignOrdersModal from './AssignOrdersModal'
 import DriverFormModal from './DriverFormModal'
@@ -17,12 +22,18 @@ type DriverForm = { mode: 'add' } | { mode: 'edit'; driver: Driver } | null
 
 interface Notice {
   tone: 'green' | 'red'
-  text: string
+  /** Structured or plain label, resolved at render time. */
+  text: ActionLabel
+}
+
+/** The status a driver cycles to from the card button. */
+function nextStatusOf(status: DriverStatus): DriverStatus {
+  return status === 'available' ? 'on_route' : status === 'on_route' ? 'off_duty' : 'available'
 }
 
 export default function DriversPage() {
   // Subscribes to the language so driver status badges update instantly on switch.
-  useTranslation()
+  const { t } = useTranslation()
   const drivers = useCollection(db.drivers)
   const orders = useCollection(db.orders)
 
@@ -41,31 +52,37 @@ export default function DriversPage() {
       result.ok
         ? {
             tone: 'green',
-            text: `Auto-assigned ${result.assigned} pending order${result.assigned === 1 ? '' : 's'} across ${result.driversUsed} driver${result.driversUsed === 1 ? '' : 's'} by proximity.`,
+            text: {
+              key: 'actions.autoAssigned',
+              params: {
+                orders: { key: 'words.orderCount', count: result.assigned ?? 0 },
+                drivers: { key: 'words.driverCount', count: result.driversUsed ?? 0 },
+              },
+            },
           }
-        : { tone: 'red', text: result.error ?? 'Auto-assign failed.' },
+        : { tone: 'red', text: result.error ?? (t('errors.autoAssignFailed') as string) },
     )
   }
 
   return (
     <>
       <PageHeader
-        title="Drivers"
-        description="Your delivery crew, their vehicles, and current workload."
+        title={t('drivers.title')}
+        description={t('drivers.description')}
         actions={
           <>
             <Button variant="secondary" onClick={handleAutoAssign} disabled={pendingCount === 0}>
-              ✨ Auto-assign by proximity
+              {t('drivers.autoAssign')}
             </Button>
             <Button
               variant="secondary"
               onClick={() => setModalOpen(true)}
               disabled={availableCount === 0}
-              title={availableCount === 0 ? 'No available drivers — add one first' : undefined}
+              title={availableCount === 0 ? t('drivers.noAvailableDriversHint') : undefined}
             >
-              Assign orders
+              {t('drivers.assignOrders')}
             </Button>
-            <Button onClick={() => setDriverForm({ mode: 'add' })}>+ Add driver</Button>
+            <Button onClick={() => setDriverForm({ mode: 'add' })}>{t('drivers.addDriver')}</Button>
           </>
         }
       />
@@ -78,11 +95,11 @@ export default function DriversPage() {
               : 'bg-red-50 text-red-700 ring-red-600/20'
           }`}
         >
-          {notice.text}
+          {translateAction(notice.text)}
           <button
             type="button"
             onClick={() => setNotice(null)}
-            aria-label="Dismiss"
+            aria-label={t('drivers.dismiss')}
             className="ml-4 text-slate-400 transition hover:text-slate-600"
           >
             ✕
@@ -91,20 +108,23 @@ export default function DriversPage() {
       )}
 
       <p className="mb-3 text-xs text-slate-400">
-        {pendingCount} pending order{pendingCount === 1 ? '' : 's'} · {availableCount} driver
-        {availableCount === 1 ? '' : 's'} available
+        {t('words.pendingOrders', { count: pendingCount })} ·{' '}
+        {t('words.driverCountAvailable', { count: availableCount })}
       </p>
 
       {drivers.length === 0 ? (
         <EmptyState
           icon="🛵"
-          message="No drivers on the roster yet."
-          action={<Button onClick={() => setDriverForm({ mode: 'add' })}>+ Add driver</Button>}
+          message={t('drivers.emptyMessage')}
+          action={
+            <Button onClick={() => setDriverForm({ mode: 'add' })}>{t('drivers.addDriver')}</Button>
+          }
         />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {drivers.map((driver) => {
             const activeOrders = activeOrdersFor(driver.id)
+            const next = nextStatusOf(driver.status)
             return (
               <div key={driver.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="flex items-start justify-between gap-2">
@@ -115,22 +135,22 @@ export default function DriversPage() {
                 </div>
                 <dl className="mt-3 space-y-1 text-sm text-slate-600">
                   <div className="flex justify-between gap-2">
-                    <dt className="text-slate-400">Phone</dt>
+                    <dt className="text-slate-400">{t('drivers.phoneLabel')}</dt>
                     <dd>{driver.phone}</dd>
                   </div>
                   <div className="flex justify-between gap-2">
-                    <dt className="text-slate-400">Vehicle</dt>
+                    <dt className="text-slate-400">{t('drivers.vehicleLabel')}</dt>
                     <dd className="text-right">{driver.vehicle}</dd>
                   </div>
                   <div className="flex justify-between gap-2">
-                    <dt className="text-slate-400">Assigned orders</dt>
+                    <dt className="text-slate-400">{t('drivers.assignedOrdersLabel')}</dt>
                     <dd>
                       <span
                         className={`font-semibold ${activeOrders > 0 ? 'text-slate-900' : 'text-slate-400'}`}
                       >
                         {activeOrders}
                       </span>{' '}
-                      <span className="text-xs text-slate-400">(assigned or in transit)</span>
+                      <span className="text-xs text-slate-400">{t('drivers.assignmentNote')}</span>
                     </dd>
                   </div>
                 </dl>
@@ -138,31 +158,33 @@ export default function DriversPage() {
                   <Button
                     variant="secondary"
                     onClick={() => {
-                      const next =
-                        driver.status === 'available'
-                          ? 'on_route'
-                          : driver.status === 'on_route'
-                            ? 'off_duty'
-                            : 'available'
                       db.drivers.update(
                         driver.id,
                         { status: next },
-                        `Set ${driver.name} to ${DRIVER_STATUS_LABEL_EN[next]}`,
+                        // Structured label with a nested status word: the
+                        // history entry renders it in the viewing language.
+                        {
+                          key: 'actions.setDriverStatus',
+                          params: { name: driver.name, status: { key: DRIVER_STATUS_KEYS[next] } },
+                        },
                       )
                     }}
                   >
-                    Set {DRIVER_STATUS_LABEL_EN[driver.status === 'available' ? 'on_route' : driver.status === 'on_route' ? 'off_duty' : 'available'].toLowerCase()}
+                    {t('drivers.setStatus', { status: driverStatusLabel(next) })}
                   </Button>
                   <Button variant="secondary" onClick={() => setDriverForm({ mode: 'edit', driver })}>
-                    Edit
+                    {t('common.edit')}
                   </Button>
                   <Button
                     variant="danger"
                     onClick={() =>
-                      db.drivers.remove(driver.id, `Deleted driver ${driver.name}`)
+                      db.drivers.remove(driver.id, {
+                        key: 'actions.deletedDriver',
+                        params: { name: driver.name },
+                      })
                     }
                   >
-                    Delete
+                    {t('common.delete')}
                   </Button>
                 </div>
               </div>

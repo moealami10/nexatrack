@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 import { Badge } from '@/components/ui/Badge'
 import type { BadgeTone } from '@/components/ui/Badge'
@@ -9,18 +10,24 @@ import { Table, Td } from '@/components/ui/Table'
 import { db, useCollection } from '@/lib/store'
 import type { InventoryItem } from '@/types'
 
+/**
+ * Stock badge per row — labels are TRANSLATION KEYS resolved by the
+ * component (inside an i18n-reactive render), so a language switch
+ * updates them instantly.
+ */
 function stockStatus(
   item: InventoryItem,
   hasProduct: boolean,
-): { tone: BadgeTone; label: string } {
-  if (!hasProduct) return { tone: 'amber', label: 'No product entry' }
-  if (item.quantity === 0) return { tone: 'red', label: 'Out of stock' }
-  if (item.quantity < item.lowStockThreshold) return { tone: 'red', label: 'Below threshold' }
-  if (item.quantity === item.lowStockThreshold) return { tone: 'amber', label: 'At threshold' }
-  return { tone: 'green', label: 'In stock' }
+): { tone: BadgeTone; key: string } {
+  if (!hasProduct) return { tone: 'amber', key: 'inventory.noProductEntry' }
+  if (item.quantity === 0) return { tone: 'red', key: 'inventory.outOfStock' }
+  if (item.quantity < item.lowStockThreshold) return { tone: 'red', key: 'inventory.belowThreshold' }
+  if (item.quantity === item.lowStockThreshold) return { tone: 'amber', key: 'inventory.atThreshold' }
+  return { tone: 'green', key: 'inventory.inStock' }
 }
 
 export default function InventoryPage() {
+  const { t } = useTranslation()
   const products = useCollection(db.products)
   const inventory = useCollection(db.inventory)
 
@@ -30,47 +37,60 @@ export default function InventoryPage() {
   /** Inline editing: clamp to a whole number, never below zero. */
   function setQuantity(productId: string, raw: string) {
     const quantity = Math.max(0, Math.floor(Number(raw) || 0))
-    const name = productBy(productId)?.name ?? 'item'
-    db.inventory.update(productId, { quantity }, `Updated stock for ${name}`)
+    const name = productBy(productId)?.name ?? t('common.unknownProduct')
+    db.inventory.update(
+      productId,
+      { quantity },
+      { key: 'actions.updatedStock', params: { name } },
+    )
   }
 
   return (
     <>
       <PageHeader
-        title="Inventory"
-        description="Stock levels per warehouse item. Click a quantity to edit it."
+        title={t('inventory.title')}
+        description={t('inventory.description')}
       />
 
       {products.length === 0 ? (
         <EmptyState
           icon="🗃️"
-          message="Add a product first — stock rows appear when you create products."
+          message={t('inventory.emptyNoProducts')}
           action={
             <Link
               to="/products"
               className="rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-slate-700"
             >
-              Go to Products →
+              {t('inventory.goToProducts')}
             </Link>
           }
         />
       ) : inventory.length === 0 ? (
-        <EmptyState icon="🗃️" message="No inventory rows. Adding products creates stock entries automatically." />
+        <EmptyState icon="🗃️" message={t('inventory.emptyNoRows')} />
       ) : (
-        <Table columns={['Product', 'Quantity', 'Low-stock threshold', 'Status', 'Actions']}>
+        <Table
+          columns={[
+            t('inventory.columnProduct'),
+            t('inventory.columnQuantity'),
+            t('inventory.columnThreshold'),
+            t('inventory.columnStatus'),
+            t('inventory.columnActions'),
+          ]}
+        >
           {inventory.map((item) => {
             const product = productBy(item.productId)
             const status = stockStatus(item, Boolean(product))
+            const name = product?.name ?? t('common.unknownProduct')
             return (
               <tr key={item.productId}>
-                <Td className="font-medium">{product?.name ?? 'Unknown product'}</Td>
+                <Td className="font-medium">{name}</Td>
                 <Td>
                   <input
                     type="number"
                     min={0}
                     value={item.quantity}
                     onChange={(event) => setQuantity(item.productId, event.target.value)}
-                    aria-label={`Quantity for ${product?.name ?? 'item'}`}
+                    aria-label={t('inventory.quantityFor', { name })}
                     className={`w-24 rounded-lg border px-2 py-1.5 text-sm ${
                       status.tone === 'red' ? 'border-red-300 bg-red-50' : 'border-slate-300'
                     }`}
@@ -79,7 +99,7 @@ export default function InventoryPage() {
                 </Td>
                 <Td className="text-slate-500">{item.lowStockThreshold}</Td>
                 <Td>
-                  <Badge tone={status.tone}>{status.label}</Badge>
+                  <Badge tone={status.tone}>{t(status.key)}</Badge>
                 </Td>
                 <Td>
                   <Button
@@ -87,11 +107,11 @@ export default function InventoryPage() {
                       db.inventory.update(
                         item.productId,
                         { quantity: item.quantity + 50 },
-                        `Restocked ${product?.name ?? 'item'} +50`,
+                        { key: 'actions.restocked', params: { name } },
                       )
                     }
                   >
-                    Restock +50
+                    {t('inventory.restock')}
                   </Button>
                 </Td>
               </tr>

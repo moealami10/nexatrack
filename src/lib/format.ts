@@ -41,6 +41,14 @@ export function formatCurrency(value: number): string {
   return numberFormatter('currency', { style: 'currency', currency: 'MAD' }).format(value)
 }
 
+/** Locale-aware decimal number, e.g. 12.5 → "12.5" / "12,5". */
+export function formatNumber(value: number, fractionDigits = 1): string {
+  return numberFormatter(`num:${fractionDigits}`, {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  }).format(value)
+}
+
 export function formatMinutes(minutes: number): string {
   const hours = Math.floor(minutes / 60)
   const rest = minutes % 60

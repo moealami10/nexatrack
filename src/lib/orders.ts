@@ -1,4 +1,5 @@
 import { db, runTransaction } from './store'
+import type { ActionLabel, TranslatableLabel } from './store'
 import { syncDriverStatusAfterOrderEvent, type OrderRouteEvent } from './dispatch'
 import type { Order, OrderItem, OrderStatus, Product, StatusEvent } from '@/types'
 
@@ -18,18 +19,29 @@ export function getOrderTotal(
   )
 }
 
+/**
+ * "2× Whole Milk, 1× Baguette" style summary. The fallback for a deleted
+ * product must already be translated — pass t('common.unknownItem').
+ */
 export function summarizeOrderItems(
   order: Order,
   productIndex: Map<string, Product>,
+  unknownName: string = 'Unknown item',
 ): string {
   return order.items
-    .map((item) => `${item.qty}× ${productIndex.get(item.productId)?.name ?? 'Unknown item'}`)
+    .map((item) => `${item.qty}× ${productIndex.get(item.productId)?.name ?? unknownName}`)
     .join(', ')
 }
 
 export interface OrderCreationResult {
   ok: boolean
-  error?: string
+  /** Structured error label, resolved at display time. */
+  error?: TranslatableLabel
+}
+
+/** One "{name} — need X, only Y left" line of a stock shortage report. */
+function shortageLine(name: string, need: number, have: number): TranslatableLabel {
+  return { key: 'errors.shortageLine', params: { name, need, have } }
 }
 
 /**
@@ -44,35 +56,38 @@ export function tryCreateOrder(draft: Order): OrderCreationResult {
   const products = db.products.all()
   const inventory = db.inventory.all()
 
-  const shortages: string[] = []
+  const shortages: TranslatableLabel[] = []
   for (const [productId, qty] of required) {
     const available =
       inventory.find((entry) => entry.productId === productId)?.quantity ?? 0
     if (qty > available) {
       const name = products.find((product) => product.id === productId)?.name ?? productId
-      shortages.push(`${name} — need ${qty}, only ${available} left`)
+      shortages.push(shortageLine(name, qty, available))
     }
   }
   if (shortages.length > 0) {
-    return { ok: false, error: `Not enough stock: ${shortages.join('; ')}.` }
+    return { ok: false, error: { key: 'errors.notEnoughStock', params: { list: shortages } } }
   }
 
   // Order + stock deduction are one undoable step: a single undo reverts both.
-  return runTransaction(`Created order for ${draft.customerName}`, () => {
-    addStock(required, -1)
-    // Record the initial status so the detail timeline has a starting point.
-    const statusHistory: StatusEvent[] =
-      draft.statusHistory ?? [{ status: 'pending', at: draft.createdAt }]
-    db.orders.add({ ...draft, statusHistory })
-    return { ok: true }
-  })
+  return runTransaction(
+    { key: 'actions.createdOrder', params: { name: draft.customerName } },
+    () => {
+      addStock(required, -1)
+      // Record the initial status so the detail timeline has a starting point.
+      const statusHistory: StatusEvent[] =
+        draft.statusHistory ?? [{ status: 'pending', at: draft.createdAt }]
+      db.orders.add({ ...draft, statusHistory })
+      return { ok: true }
+    },
+  )
 }
 
 /** Applies a status change (if any) to the order and appends to its history. */
 export function mutateOrder(
   orderId: string,
   patch: Partial<Order>,
-  label?: string,
+  label?: ActionLabel,
 ): void {
   const order = db.orders.all().find((entry) => entry.id === orderId)
   if (!order) return
@@ -88,7 +103,7 @@ export function mutateOrder(
         { status, at: now },
       ],
     },
-    label ?? `Updated order ${orderId}`,
+    label ?? { key: 'actions.updatedOrder', params: { id: orderId } },
   )
 }
 
@@ -109,7 +124,8 @@ export interface TransitionResult {
   ok: boolean
   /** Units moved to/from inventory (0 when stock didn't change). */
   units?: number
-  error?: string
+  /** Structured error label, resolved at display time. */
+  error?: TranslatableLabel
 }
 
 /**
@@ -142,10 +158,11 @@ function leaveTerminalStatus(order: Order, next: 'failed' | 'cancelled'): void {
   if (current.restocked === true) return // stock already back in inventory
 
   const units = unitsOf(current)
+  const count = units
   const label = () =>
     next === 'cancelled'
-      ? `Cancelled ${current.customerName}'s order — returned ${units} items to stock`
-      : `Marked ${current.customerName}'s order as failed — returned ${units} items to stock`
+      ? { key: 'actions.cancelledOrder', params: { name: current.customerName, count } }
+      : { key: 'actions.failedOrder', params: { name: current.customerName, count } }
 
   runTransaction(label, () => {
     addStock(requiredQuantities(current.items), +1)
@@ -166,7 +183,7 @@ function leaveTerminalStatus(order: Order, next: 'failed' | 'cancelled'): void {
 export function reactivateOrder(order: Order): TransitionResult {
   const current = db.orders.all().find((entry) => entry.id === order.id)
   if (!current || !isTerminal(current.status)) {
-    return { ok: false, error: 'Only failed or cancelled orders can be reactivated.' }
+    return { ok: false, error: { key: 'errors.reactivateNotAllowed' } }
   }
 
   const wasReturned = current.restocked === true
@@ -175,25 +192,28 @@ export function reactivateOrder(order: Order): TransitionResult {
   if (wasReturned) {
     const products = db.products.all()
     const inventory = db.inventory.all()
-    const shortages: string[] = []
+    const shortages: TranslatableLabel[] = []
     for (const [productId, qty] of required) {
       const available =
         inventory.find((entry) => entry.productId === productId)?.quantity ?? 0
       if (qty > available) {
         const name = products.find((product) => product.id === productId)?.name ?? productId
-        shortages.push(`${name} — need ${qty}, only ${available} left`)
+        shortages.push(shortageLine(name, qty, available))
       }
     }
     if (shortages.length > 0) {
-      return { ok: false, error: `Not enough stock to reactivate: ${shortages.join('; ')}.` }
+      return {
+        ok: false,
+        error: { key: 'errors.notEnoughStockReactivate', params: { list: shortages } },
+      }
     }
   }
 
+  const units = unitsOf(current)
   runTransaction(
-    () =>
-      `Reactivated ${current.customerName}'s order${
-        wasReturned ? ` — deducted ${unitsOf(current)} items from stock` : ''
-      }`,
+    wasReturned
+      ? { key: 'actions.reactivatedOrderRestock', params: { name: current.customerName, count: units } }
+      : { key: 'actions.reactivatedOrder', params: { name: current.customerName } },
     () => {
       if (wasReturned) addStock(required, -1)
       mutateOrder(current.id, { status: 'pending', driverId: undefined, restocked: false })
@@ -201,7 +221,7 @@ export function reactivateOrder(order: Order): TransitionResult {
       syncDriverStatusAfterOrderEvent(current.driverId, { type: 'left_active' })
     },
   )
-  return { ok: true, units: wasReturned ? unitsOf(current) : 0 }
+  return { ok: true, units: wasReturned ? units : 0 }
 }
 
 /** Quantity needed per product, in case the same product appears twice. */
@@ -247,14 +267,14 @@ export function advanceOrder(order: Order): void {
       mutateOrder(
         order.id,
         { status: 'assigned', driverId: chosenDriverId },
-        `Assigned ${name}'s order`,
+        { key: 'actions.assignedOrderAuto', params: { name } },
       )
       break
     }
     case 'assigned': {
       const event: OrderRouteEvent = { type: 'started_in_transit' }
       runTransaction(
-        () => `Marked ${name}'s order as in transit`,
+        { key: 'actions.orderInTransit', params: { name } },
         () => {
           mutateOrder(order.id, { status: 'in_transit' })
           syncDriverStatusAfterOrderEvent(order.driverId, event)
@@ -265,7 +285,7 @@ export function advanceOrder(order: Order): void {
     case 'in_transit': {
       const event: OrderRouteEvent = { type: 'left_active' }
       runTransaction(
-        () => `Marked ${name}'s order as delivered`,
+        { key: 'actions.orderDelivered', params: { name } },
         () => {
           mutateOrder(order.id, { status: 'delivered' })
           syncDriverStatusAfterOrderEvent(order.driverId, event)

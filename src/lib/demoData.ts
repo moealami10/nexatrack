@@ -9,8 +9,15 @@ import { db, runTransaction } from './store'
  */
 export function installDemoData(): void {
   runTransaction(
-    () =>
-      `Loaded demo data — ${seedProducts.length} products, ${seedInventory.length} stock rows, ${seedOrders.length} orders, ${seedDrivers.length} drivers`,
+    () => ({
+      key: 'actions.demoLoaded',
+      params: {
+        products: seedProducts.length,
+        rows: seedInventory.length,
+        orders: seedOrders.length,
+        drivers: seedDrivers.length,
+      },
+    }),
     () => {
       db.products.save(seedProducts)
       db.inventory.save(seedInventory)

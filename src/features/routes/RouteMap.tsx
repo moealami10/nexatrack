@@ -1,6 +1,7 @@
 import * as L from 'leaflet'
 import type { LatLngExpression } from 'leaflet'
 import { MapContainer, Marker, Polyline, TileLayer, Tooltip } from 'react-leaflet'
+import { useTranslation } from 'react-i18next'
 import 'leaflet/dist/leaflet.css'
 
 import type { GeoPoint, Stop } from '@/lib/routing'
@@ -51,6 +52,7 @@ export default function RouteMap({
     ? [depot, ...beforeStops, depot].map(toLatLng)
     : null
   const mainPath = roadPath && roadPath.length >= 2 ? roadPath : afterPositions
+  const { t } = useTranslation()
 
   return (
     <MapContainer center={toLatLng(depot)} zoom={12} className="h-full w-full" scrollWheelZoom>
@@ -60,7 +62,7 @@ export default function RouteMap({
       />
 
       <Marker position={toLatLng(depot)} icon={DEPOT_ICON}>
-        <Tooltip {...TOOLTIP_OPTIONS}>Depot — start and end</Tooltip>
+        <Tooltip {...TOOLTIP_OPTIONS}>{t('routes.mapDepotTooltip')}</Tooltip>
       </Marker>
 
       {stops.map((stop, index) => (

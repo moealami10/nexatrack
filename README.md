@@ -63,11 +63,6 @@ full-state snapshots (products, inventory, orders, drivers, route plans):
   and fail/cancel (status + stock return) each undo in a single step.
 - **Limit**: the 50 most recent snapshots are kept; history itself lives
   in memory only (it is never persisted and clears on reload).
-- **Language labels**: store-level action labels (the sentences in the
-  toasts and undo tooltips, e.g. *Added product Milk*) are English-only
-  for now; the undo/redo tooltip *chrome* around them is translated.
-  Translating the generated sentences is a planned pass (they will move
-  to translation keys rendered at display time).
 
 ## Languages (EN / FR)
 
@@ -89,12 +84,14 @@ in `src/i18n/locales/{en,fr}.json`, organized by feature section
 - **Pluralization**: i18next plural keys (`count_one`/`count_other`),
   e.g. *1 order / 2 orders* — French correctly puts 0 inside the "one"
   category (*0 commande*).
-- **Converted so far**: sidebar, top bar (+ undo/redo tooltips), the
-  Dashboard, status badges/labels everywhere (`lib/status.ts`), the toast
-  frame, and modal/dialog chrome in the shell. The remaining pages
-  (Products, Inventory, Orders internals, Drivers internals, Routes) keep
-  English strings until their conversion pass — their data-layer labels,
-  however, are already status-translated.
+- **Coverage**: the entire UI is translated — every page, form,
+  placeholder, validation error, empty state, confirmation, and tooltip.
+  Store-level **action labels are structured**: history entries and
+  toasts store `{key, params}` translation keys (e.g.
+  `actions.deletedProduct` + `{name}`), resolved by
+  `src/lib/actionLabel.ts :: translateAction()` in the language ACTIVE AT
+  VIEWING TIME, including nested labels (status words inside sentences,
+  "3 orders across 2 drivers" counts, listed stock shortages).
 - **Tests**: `src/i18n/parity.test.ts` fails when `en.json` and `fr.json`
   diverge in keys; `src/i18n/language.test.ts` covers detection order,
   persistence after a simulated reload, and the `<html lang>` sync.

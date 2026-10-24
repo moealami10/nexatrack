@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/Button'
 import { Field, inputClasses } from '@/components/ui/Field'
@@ -24,6 +25,7 @@ export default function ProductFormModal({
   product: Product | null
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   const [name, setName] = useState(product?.name ?? '')
   const [sku, setSku] = useState(product?.sku ?? '')
   const [unit, setUnit] = useState(product?.unit ?? 'pc')
@@ -46,7 +48,7 @@ export default function ProductFormModal({
           unit,
           price: cleanPrice,
         },
-        `Updated product ${trimmedName}`,
+        { key: 'actions.updatedProduct', params: { name: trimmedName } },
       )
     } else {
       const created: Product = {
@@ -58,49 +60,52 @@ export default function ProductFormModal({
       }
       // Product + its inventory row are ONE undoable step: a single undo
       // removes both together.
-      runTransaction(`Added product ${trimmedName}`, () => {
-        db.products.add(created)
-        db.inventory.add({
-          productId: created.id,
-          quantity: 0,
-          lowStockThreshold: DEFAULT_LOW_STOCK_THRESHOLD,
-        })
-      })
+      runTransaction(
+        { key: 'actions.addedProduct', params: { name: trimmedName } },
+        () => {
+          db.products.add(created)
+          db.inventory.add({
+            productId: created.id,
+            quantity: 0,
+            lowStockThreshold: DEFAULT_LOW_STOCK_THRESHOLD,
+          })
+        },
+      )
     }
     onClose()
   }
 
   return (
-    <Modal title={product ? 'Edit product' : 'Add product'} onClose={onClose}>
+    <Modal title={product ? t('products.formTitleEdit') : t('products.formTitleAdd')} onClose={onClose}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <Field label="Name">
+        <Field label={t('products.fieldName')}>
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="Greek Yogurt 500g"
+            placeholder={t('products.placeholderName')}
             className={inputClasses}
             autoFocus
           />
         </Field>
-        <Field label="SKU (auto-generated if empty)">
+        <Field label={t('products.fieldSku')}>
           <input
             value={sku}
             onChange={(event) => setSku(event.target.value)}
-            placeholder="SKU-A1B2C"
+            placeholder={t('products.placeholderSku')}
             className={inputClasses}
           />
         </Field>
         <div className="grid grid-cols-2 gap-4">
-          <Field label="Price (MAD)">
+          <Field label={t('products.fieldPrice')}>
             <input
               value={price}
               onChange={(event) => setPrice(event.target.value)}
               inputMode="decimal"
-              placeholder="16.00"
+              placeholder={t('products.placeholderPrice')}
               className={inputClasses}
             />
           </Field>
-          <Field label="Unit">
+          <Field label={t('products.fieldUnit')}>
             <select
               value={unit}
               onChange={(event) => setUnit(event.target.value)}
@@ -116,9 +121,11 @@ export default function ProductFormModal({
         </div>
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </Button>
-          <Button type="submit">{product ? 'Save changes' : 'Add product'}</Button>
+          <Button type="submit">
+            {product ? t('common.saveChanges') : t('products.addProduct')}
+          </Button>
         </div>
       </form>
     </Modal>

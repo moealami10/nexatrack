@@ -4,6 +4,7 @@ import type { Driver, DriverStatus, Order, Product } from '@/types'
 
 import { autoAssignPendingOrders, isActiveAssignment, assignOrders, nextDriverStatus, startDriverRoute } from './dispatch'
 import { advanceOrder, cancelOrder, markOrderFailed, reactivateOrder, tryCreateOrder } from './orders'
+import { translateAction } from './actionLabel'
 import { db, history, newId } from './store'
 
 /**
@@ -114,7 +115,7 @@ describe('driver status automation (integration)', () => {
     expect(orderOf(order)!.status).toBe('assigned')
     expect(orderOf(order)!.driverId).toBe(driver.id)
     expect(stats().undoCount - before.undoCount).toBe(1)
-    expect(history.undoLabel()).toBe(`Assigned 1 order to Steady Sam`)
+    expect(translateAction(history.undoLabel()!)).toBe(`Assigned 1 order to Steady Sam`)
   })
 
   it('startDriverRoute moves all assigned stops in transit in ONE entry (driver too)', async () => {
@@ -137,7 +138,9 @@ describe('driver status automation (integration)', () => {
     expect(driverOf(driver).status).toBe('on_route')
     // Stops + driver flip = exactly ONE history entry.
     expect(stats().undoCount - before.undoCount).toBe(1)
-    expect(history.undoLabel()).toBe("Started Rami Route's route — moved 2 stops in transit")
+    expect(translateAction(history.undoLabel()!)).toBe(
+      "Started Rami Route's route — moved 2 stops in transit",
+    )
 
     // Undo puts everything back: stops assigned, driver available.
     expect(history.undo()).toBe(true)
@@ -273,7 +276,7 @@ describe('driver status automation (integration)', () => {
     await tick()
 
     expect(result.ok).toBe(false)
-    expect(result.error).toContain('Duty Dodger is off duty')
+    expect(translateAction(result.error)).toContain('Duty Dodger is off duty')
     expect(result.assigned).toBeUndefined()
     expect(orderOf(order)!.status).toBe('pending') // untouched
     expect(orderOf(order)!.driverId).toBeUndefined()
@@ -295,7 +298,7 @@ describe('driver status automation (integration)', () => {
     await tick()
 
     expect(result.ok).toBe(false)
-    expect(result.error).toBe('No available drivers right now.')
+    expect(translateAction(result.error)).toBe('No available drivers right now.')
     expect(orderOf(order)!.status).toBe('pending')
     expect(orderOf(order)!.driverId).toBeUndefined()
 

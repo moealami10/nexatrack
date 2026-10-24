@@ -63,17 +63,17 @@ export default function OrdersPage() {
   return (
     <>
       <PageHeader
-        title="Orders"
-        description="Track orders from intake to delivery. Stock is deducted on creation and returned on cancel/fail."
+        title={t('orders.title')}
+        description={t('orders.description')}
         actions={
           <>
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search customer, address, or ID…"
+              placeholder={t('orders.searchPlaceholder')}
               className={`${inputClasses} w-full sm:w-64`}
             />
-            <Button onClick={() => setModalOpen(true)}>+ New order</Button>
+            <Button onClick={() => setModalOpen(true)}>{t('orders.addNew')}</Button>
           </>
         }
       />
@@ -109,7 +109,7 @@ export default function OrdersPage() {
           return (
             <EmptyState
               icon="🧾"
-              message="No orders yet."
+              message={t('orders.noOrders')}
               action={
                 <div className="flex flex-col items-center gap-2">
                   <Button
@@ -117,19 +117,19 @@ export default function OrdersPage() {
                     disabled={!canCreate}
                     title={
                       noProducts
-                        ? 'Add products first — orders need at least one product'
+                        ? t('orders.blockedNoStockShort')
                         : noStock
-                          ? 'Set a stock quantity above zero first — orders are blocked without stock'
+                          ? t('orders.blockedNoStockQtyShort')
                           : undefined
                     }
                   >
-                    + New order
+                    {t('orders.addNew')}
                   </Button>
                   {!canCreate && (
                     <p className="max-w-xs text-center text-xs text-slate-400">
                       {noProducts
-                        ? 'Add at least one product before creating orders.'
-                        : 'Set at least one product’s stock above zero to create orders.'}
+                        ? t('orders.blockedNoStockInfo')
+                        : t('orders.blockedNoStockQtyInfo')}
                     </p>
                   )}
                 </div>
@@ -138,9 +138,21 @@ export default function OrdersPage() {
           )
         })()
       ) : visibleOrders.length === 0 ? (
-        <EmptyState icon="🔍" message="No orders match the current filter." />
+        <EmptyState icon="🔍" message={t('orders.noMatchFilter')} />
       ) : (
-        <Table columns={['Order', 'Customer', 'Address', 'Items', 'Driver', 'Status', 'Date', 'Total', '']}>
+        <Table
+          columns={[
+            t('orders.columnOrder'),
+            t('orders.columnCustomer'),
+            t('orders.columnAddress'),
+            t('orders.columnItems'),
+            t('orders.columnDriver'),
+            t('orders.columnStatus'),
+            t('orders.columnDate'),
+            t('orders.columnTotal'),
+            '',
+          ]}
+        >
           {visibleOrders.map((order) => (
             <tr
               key={order.id}
@@ -156,7 +168,7 @@ export default function OrdersPage() {
                 </div>
               </Td>
               <Td className="max-w-56 truncate text-slate-500">
-                {summarizeOrderItems(order, productIndex)}
+                {summarizeOrderItems(order, productIndex, t('common.unknownItem'))}
               </Td>
               <Td className="text-slate-500">{driverName(order.driverId)}</Td>
               <Td>
@@ -167,7 +179,7 @@ export default function OrdersPage() {
               <Td className="text-slate-500">{formatDate(order.createdAt)}</Td>
               <Td>{formatCurrency(getOrderTotal(order, productIndex))}</Td>
               <Td className="text-right">
-                <span className="text-sm font-medium text-slate-600">View →</span>
+                <span className="text-sm font-medium text-slate-600">{t('orders.view')}</span>
               </Td>
             </tr>
           ))}

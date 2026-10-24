@@ -10,13 +10,13 @@ import { LANGUAGES, currentLanguage } from '@/i18n'
  * choice via the language detector — no reload involved.
  */
 export function LanguageSwitch() {
-  const { i18n } = useTranslation()
+  const { i18n, t } = useTranslation()
   const active = currentLanguage()
 
   return (
     <div
       role="group"
-      aria-label={active === 'fr' ? 'Langue' : 'Language'}
+      aria-label={t('common.language')}
       className="flex h-9 items-center overflow-hidden rounded-md border border-slate-300 bg-white text-sm font-medium"
     >
       {LANGUAGES.map((option, index) => {
@@ -26,7 +26,9 @@ export function LanguageSwitch() {
             key={option.code}
             type="button"
             aria-pressed={isActive}
-            aria-label={option.code === 'en' ? 'Switch to English' : 'Passer en français'}
+            aria-label={
+              option.code === 'en' ? t('common.switchToEnglish') : t('common.switchToFrench')
+            }
             onClick={() => {
               if (!isActive) void i18n.changeLanguage(option.code)
             }}
@@ -35,7 +37,9 @@ export function LanguageSwitch() {
                 ? 'bg-slate-900 font-semibold text-white'
                 : 'text-slate-700 hover:bg-slate-100'
             } ${index > 0 ? 'border-l border-slate-300' : ''}`}
-            title={option.code === 'en' ? 'Switch to English' : 'Passer en français'}
+            title={
+              option.code === 'en' ? t('common.switchToEnglish') : t('common.switchToFrench')
+            }
           >
             {option.label}
           </button>

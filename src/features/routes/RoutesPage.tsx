@@ -8,7 +8,7 @@ import { inputClasses } from '@/components/ui/Field'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { advanceOrder, markOrderFailed } from '@/lib/orders'
 import { isActiveAssignment, startDriverRoute } from '@/lib/dispatch'
-import { formatMinutes } from '@/lib/format'
+import { formatMinutes, formatNumber } from '@/lib/format'
 import {
   AVERAGE_SPEED_KMH,
   evaluateTour,
@@ -26,6 +26,7 @@ import {
 } from '@/lib/routing'
 import { getDistanceMatrix, getRouteGeometry } from '@/lib/roadRouting'
 import { db, runTransaction, useCollection } from '@/lib/store'
+import type { TranslatableLabel } from '@/lib/store'
 import { driverStatusLabel, DRIVER_STATUS_TONE } from '@/lib/status'
 import type { Order } from '@/types'
 
@@ -47,8 +48,7 @@ function stopOf(order: Order): Stop {
 }
 
 export default function RoutesPage() {
-  // Subscribes to the language so the driver status badge updates instantly on switch.
-  useTranslation()
+  const { t } = useTranslation()
   const drivers = useCollection(db.drivers)
   const orders = useCollection(db.orders)
   const routePlans = useCollection(db.routePlans)
@@ -114,17 +114,28 @@ export default function RoutesPage() {
       }).lateCount
       let saved = 0
       let lateSaved = 0
-      // Persisting the plan is ONE undoable step; the label resolves once
-      // the savings are final so the toast can report them.
+      // Persisting the plan is ONE undoable step; the structured label
+      // resolves once the savings are final so the toast can report them.
+      // The km figure is formatted with the active locale at record time.
       runTransaction(
-        () => {
-          const latesText =
-            lateSaved > 0
-              ? ` — avoids ${lateSaved} late stop${lateSaved === 1 ? '' : 's'}`
-              : ''
-          return saved > 0.05
-            ? `Optimized ${driver.name}'s route — saves about ${saved.toFixed(1)} km${latesText}`
-            : `Optimized ${driver.name}'s route${latesText || ' — already in the best order'}`
+        (): TranslatableLabel => {
+          if (saved > 0.05 && lateSaved > 0) {
+            return {
+              key: 'actions.optimizerSavedLates',
+              params: {
+                name: driver.name,
+                km: formatNumber(saved, 1),
+                count: lateSaved,
+              },
+            }
+          }
+          if (saved > 0.05) {
+            return { key: 'actions.optimizerSaved', params: { name: driver.name, km: formatNumber(saved, 1) } }
+          }
+          if (lateSaved > 0) {
+            return { key: 'actions.optimizerLatesOnly', params: { name: driver.name, count: lateSaved } }
+          }
+          return { key: 'actions.optimizerNoChange', params: { name: driver.name } }
         },
         () => {
           const plan = optimizeRoute(DEPOT, activeStops, {
@@ -253,18 +264,18 @@ export default function RoutesPage() {
   return (
     <>
       <PageHeader
-        title="Routes"
-        description="Round trips for each driver: depot → stops → depot. Hover a pin for details."
+        title={t('routes.title')}
+        description={t('routes.description')}
         actions={
           <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
             <label className="flex items-center gap-1.5 text-sm text-slate-500">
-              Shift
+              {t('routes.shiftLabel')}
               <input
                 type="time"
                 value={shiftStart}
                 onChange={(event) => setShiftStart(event.target.value)}
                 className={`${inputClasses} w-28 px-2 py-1.5`}
-                aria-label="Shift start time"
+                aria-label={t('routes.shiftStartAria')}
               />
             </label>
             <select
@@ -272,14 +283,14 @@ export default function RoutesPage() {
               onChange={(event) => handleDriverChange(event.target.value)}
               className={`${inputClasses} w-full sm:w-64`}
             >
-              <option value="">— Select a driver —</option>
+              <option value="">{t('routes.selectDriver')}</option>
               {drivers.map((driver) => {
                 const count = orders.filter(
                   (order) => order.driverId === driver.id && isActiveAssignment(order),
                 ).length
                 return (
                   <option key={driver.id} value={driver.id}>
-                    {driver.name} ({count} order{count === 1 ? '' : 's'})
+                    {driver.name} ({t('orders.count', { count })})
                   </option>
                 )
               })}
@@ -311,7 +322,7 @@ export default function RoutesPage() {
 
               {approximate && (
                 <p className="mt-2">
-                  <Badge tone="amber">≈ approximate distances</Badge>
+                  <Badge tone="amber">{t('routes.approximateBadge')}</Badge>
                 </p>
               )}
 
@@ -320,7 +331,7 @@ export default function RoutesPage() {
                 onClick={handleOptimize}
                 disabled={driverOrders.length === 0 || optimizing}
               >
-                {optimizing ? '⏳ Optimizing…' : '⚡ Optimize route'}
+                {optimizing ? t('routes.optimizing') : t('routes.optimize')}
               </Button>
 
               <Button
@@ -328,50 +339,58 @@ export default function RoutesPage() {
                 onClick={() => startDriverRoute(driver.id)}
                 disabled={!driverOrders.some((order) => order.status === 'assigned')}
               >
-                ▶ Start route
+                {t('routes.startRoute')}
               </Button>
 
               {driverOrders.length === 0 ? (
                 <p className="mt-3 text-sm text-slate-500">
-                  No active orders for this driver yet.
+                  {t('routes.noActiveOrders')}
                 </p>
               ) : (
                 <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
                   <div className="rounded-lg bg-slate-50 px-3 py-2">
-                    <dt className="text-xs text-slate-500">Distance</dt>
+                    <dt className="text-xs text-slate-500">{t('routes.distanceLabel')}</dt>
                     <dd className="font-semibold text-slate-900">
                       {(isOptimized && savedPlan ? savedPlan.distanceKm : baselineKm).toFixed(1)} km
-                      {!isOptimized && <span className="ml-1 text-xs font-normal text-slate-400">unoptimized</span>}
+                      {!isOptimized && (
+                        <span className="ml-1 text-xs font-normal text-slate-400">
+                          {t('routes.unoptimized')}
+                        </span>
+                      )}
                     </dd>
                   </div>
                   <div className="rounded-lg bg-slate-50 px-3 py-2">
-                    <dt className="text-xs text-slate-500">Est. time</dt>
+                    <dt className="text-xs text-slate-500">{t('routes.timeLabel')}</dt>
                     <dd className="font-semibold text-slate-900">
                       {formatMinutes(
                         isOptimized && savedPlan ? savedPlan.estimatedMinutes : baselineMinutes,
                       )}
                       {approximate && (
                         <span className="ml-1 text-xs font-normal text-slate-400">
-                          @ {AVERAGE_SPEED_KMH} km/h
+                          {t('routes.speedNote', { speed: AVERAGE_SPEED_KMH })}
                         </span>
                       )}
                     </dd>
                   </div>
                   <div className="col-span-2 rounded-lg bg-slate-50 px-3 py-2">
-                    <dt className="text-xs text-slate-500">Schedule (during {formatHhmm(shiftStartMinutes)})</dt>
+                    <dt className="text-xs text-slate-500">
+                      {t('routes.scheduleDuring', { start: formatHhmm(shiftStartMinutes) })}
+                    </dt>
                     <dd className="font-semibold text-slate-900">
                       {schedule ? (
                         <>
-                          back by {formatHhmm(schedule.endAt)} ·{' '}
-                          {formatMinutes(schedule.endAt - shiftStartMinutes)} door-to-door
+                          {t('routes.backBy', {
+                            end: formatHhmm(schedule.endAt),
+                            duration: formatMinutes(schedule.endAt - shiftStartMinutes),
+                          })}
                         </>
                       ) : (
-                        <span className="font-normal text-slate-400">computing…</span>
+                        <span className="font-normal text-slate-400">{t('routes.computing')}</span>
                       )}
                     </dd>
                   </div>
                   <div className="col-span-2 rounded-lg bg-slate-50 px-3 py-2">
-                    <dt className="text-xs text-slate-500">Late stops</dt>
+                    <dt className="text-xs text-slate-500">{t('routes.lateStopsLabel')}</dt>
                     <dd
                       className={`font-semibold ${
                         schedule && schedule.lateCount > 0 ? 'text-red-600' : 'text-emerald-600'
@@ -379,8 +398,11 @@ export default function RoutesPage() {
                     >
                       {schedule
                         ? schedule.lateCount === 0
-                          ? 'None — all windows met'
-                          : `${schedule.lateCount} late · ${schedule.totalLateMinutes} min total`
+                          ? t('routes.lateNone')
+                          : t('routes.lateSome', {
+                              count: schedule.lateCount,
+                              minutes: schedule.totalLateMinutes,
+                            })
                         : '—'}
                     </dd>
                   </div>
@@ -389,7 +411,9 @@ export default function RoutesPage() {
 
               {isOptimized && driverOrders.length >= 2 && (
                 <div className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
-                  <p className="font-medium">Saved {savedKm.toFixed(1)} km ({savedPercent.toFixed(0)}%)</p>
+                  <p className="font-medium">
+                    {t('routes.savedKm', { km: savedKm.toFixed(1), percent: savedPercent.toFixed(0) })}
+                  </p>
                   <p className="mt-0.5 text-xs text-emerald-600">
                     {baselineKm.toFixed(1)} km / {formatMinutes(baselineMinutes)} →{' '}
                     {savedPlan!.distanceKm.toFixed(1)} km /{' '}
@@ -403,7 +427,8 @@ export default function RoutesPage() {
           {driver && driverOrders.length > 0 && (
             <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
               <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
-                Stops {isOptimized && <span className="font-normal normal-case">(optimized)</span>}
+                {t('routes.stopsTitle')}{' '}
+                {isOptimized && <span className="font-normal normal-case">{t('routes.optimizedSuffix')}</span>}
               </h3>
               <ol className="space-y-2">
                 <li className="flex items-center gap-2 text-sm">
@@ -412,7 +437,7 @@ export default function RoutesPage() {
                       🚚
                     </span>
                   </span>
-                  <span className="text-slate-500">Depot — start &amp; end</span>
+                  <span className="text-slate-500">{t('routes.depotRowLabel')}</span>
                 </li>
                 {displayedStops.map((stop, index) => {
                   const order = orders.find((candidate) => candidate.id === stop.id)
@@ -428,12 +453,15 @@ export default function RoutesPage() {
                       </span>
                       <span className="min-w-0">
                         <span className="font-medium text-slate-800">
-                          {order?.customerName ?? 'Unknown'}
+                          {order?.customerName ?? t('common.unknown')}
                         </span>{' '}
                         <span className="text-xs text-slate-400">{order?.address}</span>
                         {order?.deliveryWindowStart && order?.deliveryWindowEnd && (
                           <span className="ml-1 whitespace-nowrap text-xs text-slate-400">
-                            ⏰ {order.deliveryWindowStart}–{order.deliveryWindowEnd}
+                            {t('routes.windowBadge', {
+                              start: order.deliveryWindowStart,
+                              end: order.deliveryWindowEnd,
+                            })}
                           </span>
                         )}
                       </span>
@@ -449,9 +477,12 @@ export default function RoutesPage() {
                         >
                           {entry
                             ? late
-                              ? `${formatHhmm(entry.arrivalAt)} · ${entry.lateMinutes}m late`
-                              : `ETA ${formatHhmm(entry.arrivalAt)}`
-                            : 'ETA —'}
+                              ? t('routes.etaLate', {
+                                  time: formatHhmm(entry.arrivalAt),
+                                  minutes: entry.lateMinutes,
+                                })
+                              : t('routes.etaLabel', { time: formatHhmm(entry.arrivalAt) })
+                            : t('routes.etaUnknown')}
                         </span>
                         {inTransit ? (
                           <>
@@ -460,19 +491,19 @@ export default function RoutesPage() {
                               onClick={() => advanceOrder(order!)}
                               className="rounded px-1.5 py-0.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50"
                             >
-                              ✓ Delivered
+                              ✓ {t('status.order.delivered')}
                             </button>
                             <button
                               type="button"
                               onClick={() => markOrderFailed(order!)}
                               className="rounded px-1.5 py-0.5 text-xs font-medium text-red-600 transition hover:bg-red-50"
                             >
-                              ✕ Failed
+                              ✕ {t('status.order.failed')}
                             </button>
                           </>
                         ) : (
                           order?.status === 'assigned' && (
-                            <span className="text-xs text-slate-400">awaiting start</span>
+                            <span className="text-xs text-slate-400">{t('routes.awaitingStart')}</span>
                           )
                         )}
                       </span>
@@ -482,8 +513,8 @@ export default function RoutesPage() {
               </ol>
               <p className="mt-2 text-xs text-slate-400">
                 {driverOrders.some((order) => order.status === 'in_transit')
-                  ? 'Route running — mark each stop as it completes.'
-                  : 'Press “Start route” to put every stop in transit.'}
+                  ? t('routes.routeRunningHint')
+                  : t('routes.startRouteHint')}
               </p>
             </div>
           )}
@@ -493,8 +524,8 @@ export default function RoutesPage() {
               icon="🗺️"
               message={
                 drivers.length === 0
-                  ? 'Add a driver and assign orders to plan a route.'
-                  : 'Pick a driver above to see their stops around Casablanca.'
+                  ? t('routes.emptyNoDrivers')
+                  : t('routes.emptyPickDriver')
               }
             />
           )}

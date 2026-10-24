@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Drawer } from '@/components/ui/Drawer'
+import { translateAction, type ActionLabel } from '@/lib/actionLabel'
 import { formatDateTime, formatCurrency } from '@/lib/format'
 import {
   advanceOrder,
@@ -17,8 +19,6 @@ import { driverStatusLabel, orderStatusLabel } from '@/lib/status'
 import { db, useCollection } from '@/lib/store'
 import type { OrderStatus } from '@/types'
 
-import { useTranslation } from 'react-i18next'
-
 import { StatusTimeline } from './StatusTimeline'
 
 const SECTION_TITLE = 'mb-2 text-xs font-medium uppercase tracking-wide text-slate-500'
@@ -31,11 +31,11 @@ export default function OrderDetailDrawer({
   onClose: () => void
 }) {
   // Subscribes to the language so the status badge updates instantly on switch.
-  useTranslation()
+  const { t } = useTranslation()
   const orders = useCollection(db.orders)
   const drivers = useCollection(db.drivers)
   const products = useCollection(db.products)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<ActionLabel | null>(null)
 
   const order = orders.find((entry) => entry.id === orderId)
   if (!order) return null
@@ -46,13 +46,13 @@ export default function OrderDetailDrawer({
     (driver) => driver.status !== 'off_duty' && driver.id !== order.driverId,
   )
 
-  const nextLabel =
+  const nextLabel: string | null =
     order.status === 'pending'
-      ? 'Assign driver'
+      ? t('orders.nextAssignDriver')
       : order.status === 'assigned'
-        ? 'Start delivery'
+        ? t('orders.nextStartDelivery')
         : order.status === 'in_transit'
-          ? 'Mark delivered'
+          ? t('orders.nextMarkDelivered')
           : null
   const canFail: OrderStatus[] = ['pending', 'assigned', 'in_transit']
   const isTerminal = order.status === 'failed' || order.status === 'cancelled'
@@ -70,11 +70,11 @@ export default function OrderDetailDrawer({
   const handleReactivate = () => {
     setError(null)
     const result = reactivateOrder(order)
-    if (!result.ok) setError(result.error ?? 'Could not reactivate the order.')
+    if (!result.ok) setError(result.error ?? { key: 'errors.cannotReactivate' })
   }
 
   return (
-    <Drawer title={`Order ${order.id}`} onClose={onClose}>
+    <Drawer title={t('orders.columnOrder') + ' ' + order.id} onClose={onClose}>
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-slate-900">{order.customerName}</h3>
         <Badge>{orderStatusLabel(order.status)}</Badge>
@@ -86,16 +86,16 @@ export default function OrderDetailDrawer({
       {(order.deliveryWindowStart || order.serviceMinutes != null) && (
         <p className="mt-2 text-sm text-slate-600">
           {order.deliveryWindowStart && order.deliveryWindowEnd && (
-            <>🪟 Window {order.deliveryWindowStart}–{order.deliveryWindowEnd} · </>
+            <>{t('orders.windowLabel', { start: order.deliveryWindowStart, end: order.deliveryWindowEnd })}</>
           )}
-          Serviced in {order.serviceMinutes ?? 5} min at the stop
+          {t('orders.serviceAtTheStop', { minutes: order.serviceMinutes ?? 5 })}
         </p>
       )}
 
       {/* Driver assignment (only while the order can still change hands) */}
       {(order.status === 'pending' || order.status === 'assigned') && (
         <div className="mt-5">
-          <p className={SECTION_TITLE}>Driver</p>
+          <p className={SECTION_TITLE}>{t('orders.driverTitle')}</p>
           <select
             value={order.driverId ?? ''}
             onChange={(event) => {
@@ -105,13 +105,16 @@ export default function OrderDetailDrawer({
                 order.id,
                 { driverId: value || undefined },
                 value && chosen
-                  ? `Assigned ${order.customerName}'s order to ${chosen.name}`
-                  : `Unassigned ${order.customerName}'s order`,
+                  ? {
+                      key: 'actions.assignedOrderTo',
+                      params: { name: order.customerName, driver: chosen.name },
+                    }
+                  : { key: 'actions.unassignedOrder', params: { name: order.customerName } },
               )
             }}
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
           >
-            <option value="">— Unassigned —</option>
+            <option value="">{t('orders.driverUnassigned')}</option>
             {candidates.map((driver) => (
               <option key={driver.id} value={driver.id}>
                 {driver.name} ({driverStatusLabel(driver.status)})
@@ -122,19 +125,20 @@ export default function OrderDetailDrawer({
       )}
       {assignedDriver && order.status !== 'pending' && order.status !== 'assigned' && (
         <p className="mt-3 text-sm text-slate-600">
-          Driver: <span className="font-medium">{assignedDriver.name}</span>
+          {t('orders.driverField')}
+          <span className="font-medium">{assignedDriver.name}</span>
         </p>
       )}
 
       {/* Timeline */}
       <div className="mt-6">
-        <p className={SECTION_TITLE}>Timeline</p>
+        <p className={SECTION_TITLE}>{t('orders.timelineTitle')}</p>
         <StatusTimeline order={order} />
       </div>
 
       {/* Items */}
       <div className="mt-6">
-        <p className={SECTION_TITLE}>Items</p>
+        <p className={SECTION_TITLE}>{t('orders.itemsSectionTitle')}</p>
         <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200">
           {order.items.map((item) => {
             const product = productIndex.get(item.productId)
@@ -142,7 +146,9 @@ export default function OrderDetailDrawer({
               <li key={item.productId} className="flex items-center justify-between px-3 py-2.5 text-sm">
                 <span>
                   <span className="text-slate-400">{item.qty}× </span>
-                  <span className="font-medium text-slate-800">{product?.name ?? 'Unknown item'}</span>
+                  <span className="font-medium text-slate-800">
+                    {product?.name ?? t('common.unknownItem')}
+                  </span>
                   <span className="text-slate-400"> {product?.unit}</span>
                 </span>
                 <span className="text-slate-600">
@@ -152,7 +158,7 @@ export default function OrderDetailDrawer({
             )
           })}
           <li className="flex items-center justify-between bg-slate-50 px-3 py-2.5 text-sm font-semibold">
-            <span>Total</span>
+            <span>{t('orders.total')}</span>
             <span>{formatCurrency(getOrderTotal(order, productIndex))}</span>
           </li>
         </ul>
@@ -164,15 +170,15 @@ export default function OrderDetailDrawer({
           {nextLabel && <Button onClick={() => advanceOrder(order)}>{nextLabel}</Button>}
           {canFail.includes(order.status) && (
             <Button variant="danger" onClick={handleFail}>
-              Mark failed
+              {t('orders.markFailed')}
             </Button>
           )}
           {canFail.includes(order.status) && (
             <Button variant="secondary" onClick={handleCancel}>
-              Cancel order
+              {t('orders.cancelOrder')}
             </Button>
           )}
-          {isTerminal && <Button onClick={handleReactivate}>Reactivate order</Button>}
+          {isTerminal && <Button onClick={handleReactivate}>{t('orders.reactivateOrder')}</Button>}
         </div>
       )}
       {error && (
@@ -180,19 +186,21 @@ export default function OrderDetailDrawer({
           role="alert"
           className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-inset ring-red-600/20"
         >
-          {error}
+          {translateAction(error)}
         </div>
       )}
       {isTerminal && (
         <p className="mt-6 text-sm text-slate-400">
           {order.restocked
-            ? 'Stock for this order was returned to inventory.'
-            : 'This order was closed under the old stock model; its stock was not returned.'}
+            ? t('orders.stockReturnedNote')
+            : t('orders.legacyStockNote')}
         </p>
       )}
       {order.status === 'delivered' && (
         <p className="mt-6 text-sm text-slate-400">
-          Delivered on {formatDateTime(historyIndex(order).get('delivered') ?? order.createdAt)}.
+          {t('orders.deliveredOn', {
+            date: formatDateTime(historyIndex(order).get('delivered') ?? order.createdAt),
+          })}
         </p>
       )}
     </Drawer>

@@ -4,14 +4,14 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/Button'
 import { Field, inputClasses } from '@/components/ui/Field'
 import { Modal } from '@/components/ui/Modal'
+import { translateAction, type ActionLabel } from '@/lib/actionLabel'
 import { assignOrders } from '@/lib/dispatch'
 import { db, useCollection } from '@/lib/store'
 import { driverStatusLabel } from '@/lib/status'
 
 /** Pick several pending orders and hand them to one driver. */
 export default function AssignOrdersModal({ onClose }: { onClose: () => void }) {
-  // Subscribes to the language so status badges update instantly on switch.
-  useTranslation()
+  const { t } = useTranslation()
   const orders = useCollection(db.orders)
   const drivers = useCollection(db.drivers)
 
@@ -21,7 +21,8 @@ export default function AssignOrdersModal({ onClose }: { onClose: () => void }) 
 
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [driverId, setDriverId] = useState('')
-  const [summary, setSummary] = useState<string | null>(null)
+  /** Result notice (success or structured error), resolved at render time. */
+  const [summary, setSummary] = useState<ActionLabel | null>(null)
 
   function toggle(orderId: string) {
     setSelected((current) => {
@@ -47,39 +48,41 @@ export default function AssignOrdersModal({ onClose }: { onClose: () => void }) 
     const result = assignOrders([...selected], driver.id)
     setSummary(
       !result.ok
-        ? (result.error ?? 'Could not assign the orders.')
-        : `Assigned ${result.assigned} order${result.assigned === 1 ? '' : 's'} to ${driver.name}.`,
+        ? (result.error ?? { key: 'errors.assignFailed' })
+        : { key: 'actions.assignedOrders', params: { count: result.assigned ?? 0, name: driver.name } },
     )
   }
 
   return (
-    <Modal title="Assign orders" onClose={onClose}>
+    <Modal title={t('drivers.assignModalTitle')} onClose={onClose}>
       {summary ? (
         <div className="flex flex-col items-center gap-4 py-6">
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-xl">
             ✓
           </span>
-          <p className="text-center text-sm text-slate-700">{summary}</p>
-          <Button onClick={onClose}>Done</Button>
+          <p className="text-center text-sm text-slate-700">{translateAction(summary)}</p>
+          <Button onClick={onClose}>{t('common.done')}</Button>
         </div>
       ) : (
         <div className="flex flex-col gap-4">
           {pending.length === 0 ? (
             <p className="rounded-lg bg-slate-50 px-3 py-4 text-center text-sm text-slate-500">
-              No pending orders — nothing to assign.
+              {t('drivers.assignNoPending')}
             </p>
           ) : (
             <>
               <div className="flex items-center justify-between">
                 <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                  Pending orders ({selected.size}/{pending.length} selected)
+                  {t('drivers.assignSelected', { selected: selected.size, total: pending.length })}
                 </p>
                 <button
                   type="button"
                   onClick={toggleAll}
                   className="text-xs font-medium text-slate-500 transition hover:text-slate-900"
                 >
-                  {selected.size === pending.length ? 'Clear all' : 'Select all'}
+                  {selected.size === pending.length
+                    ? t('drivers.assignClearAll')
+                    : t('drivers.assignSelectAll')}
                 </button>
               </div>
 
@@ -102,18 +105,20 @@ export default function AssignOrdersModal({ onClose }: { onClose: () => void }) 
                       <span className="block text-xs text-slate-500">{order.address}</span>
                       <span className="block font-mono text-xs text-slate-400">{order.id}</span>
                     </span>
-                    <span className="text-xs text-slate-400">{order.items.length} item(s)</span>
+                    <span className="text-xs text-slate-400">
+                      {t('orders.itemsCount', { count: order.items.length })}
+                    </span>
                   </label>
                 ))}
               </div>
 
-              <Field label="Driver">
+              <Field label={t('orders.columnDriver')}>
                 <select
                   value={driverId}
                   onChange={(event) => setDriverId(event.target.value)}
                   className={inputClasses}
                 >
-                  <option value="">— Choose a driver —</option>
+                  <option value="">{t('drivers.chooseDriver')}</option>
                   {availableDrivers.map((driver) => (
                     <option key={driver.id} value={driver.id}>
                       {driver.name} ({driverStatusLabel(driver.status)})
@@ -123,15 +128,15 @@ export default function AssignOrdersModal({ onClose }: { onClose: () => void }) 
               </Field>
 
               {availableDrivers.length === 0 && (
-                <p className="text-xs text-red-600">No available drivers right now.</p>
+                <p className="text-xs text-red-600">{t('drivers.noAvailableDrivers')}</p>
               )}
 
               <div className="flex justify-end gap-2">
                 <Button variant="secondary" onClick={onClose}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button onClick={handleConfirm} disabled={selected.size === 0 || !driverId}>
-                  Assign & confirm
+                  {t('drivers.assignConfirm')}
                 </Button>
               </div>
             </>

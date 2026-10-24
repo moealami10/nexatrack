@@ -6,13 +6,15 @@
  * Undo button always matches the label on screen.
  */
 
+import type { TranslatableLabel } from './actionLabel'
 import { onActionAnnounced } from './store'
 
 const TOAST_MS = 6000
 
 export interface ActionToast {
   id: number
-  label: string
+  /** Structured (key + params) or plain; resolved at display time. */
+  label: string | TranslatableLabel
   undoable: boolean
 }
 
@@ -47,7 +49,7 @@ export function dismissActionToast(): void {
   notify()
 }
 
-function show(label: string, undoable: boolean): void {
+function show(label: string | TranslatableLabel, undoable: boolean): void {
   if (timer !== undefined) clearTimeout(timer)
   current = { id: nextId++, label, undoable }
   timer = setTimeout(dismissActionToast, TOAST_MS)
@@ -56,7 +58,7 @@ function show(label: string, undoable: boolean): void {
 
 /** Show a toast manually (e.g. the in-memory route optimization). */
 export function showActionToast(
-  label: string,
+  label: string | TranslatableLabel,
   options: { undoable?: boolean } = {},
 ): void {
   show(label, options.undoable ?? false)

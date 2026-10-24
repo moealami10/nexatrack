@@ -8,6 +8,7 @@ import {
   reactivateOrder,
   tryCreateOrder,
 } from './orders'
+import { translateAction } from './actionLabel'
 import { db, history, newId } from './store'
 
 /**
@@ -85,7 +86,7 @@ describe('order status & inventory sync', () => {
     expect(orderOf(order)!.status).toBe('failed')
     expect(orderOf(order)!.restocked).toBe(true)
     expect(stockOf(product.id)).toBe(seed) // deducted 2, returned 2
-    expect(history.undoLabel()).toBe(
+    expect(translateAction(history.undoLabel()!)).toBe(
       "Marked Stock Buyer's order as failed — returned 2 items to stock",
     )
 
@@ -115,7 +116,7 @@ describe('order status & inventory sync', () => {
     expect(orderOf(order)!.status).toBe('cancelled')
     expect(orderOf(order)!.restocked).toBe(true)
     expect(stockOf(product.id)).toBe(seed)
-    expect(history.undoLabel()).toBe(
+    expect(translateAction(history.undoLabel()!)).toBe(
       "Cancelled Cancel Buyer's order — returned 3 items to stock",
     )
 
@@ -147,7 +148,7 @@ describe('order status & inventory sync', () => {
     expect(orderOf(order)!.restocked).toBe(false)
     expect(orderOf(order)!.driverId).toBeUndefined()
     expect(stockOf(product.id)).toBe(seed - 2)
-    expect(history.undoLabel()).toBe(
+    expect(translateAction(history.undoLabel()!)).toBe(
       "Reactivated Return Buyer's order — deducted 2 items from stock",
     )
 
@@ -180,7 +181,9 @@ describe('order status & inventory sync', () => {
     await tick()
 
     expect(result.ok).toBe(false)
-    expect(result.error).toMatch(/^Not enough stock to reactivate:.*need 5, only 1 left/)
+    expect(translateAction(result.error)).toMatch(
+      /^Not enough stock to reactivate:.*need 5, only 1 left/,
+    )
     // Blocked transition changed nothing: status, stock, and history.
     expect(orderOf(order)!.status).toBe('failed')
     expect(orderOf(order)!.restocked).toBe(true)
@@ -240,6 +243,8 @@ describe('order status & inventory sync', () => {
     expect(orderOf(order)!.status).toBe('pending')
     expect(orderOf(order)!.restocked).toBe(false)
     expect(stockOf(product.id)).toBe(seed) // untouched
-    expect(history.undoLabel()).toBe("Reactivated Legacy Buyer's order")
+    expect(translateAction(history.undoLabel()!)).toBe(
+      "Reactivated Legacy Buyer's order",
+    )
   })
 })

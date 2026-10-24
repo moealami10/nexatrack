@@ -1,5 +1,7 @@
 import { useSyncExternalStore } from 'react'
 
+import type { ActionLabel, TranslatableLabel } from './actionLabel'
+import { normalizeLabel } from './actionLabel'
 import type {
   Driver,
   InventoryItem,
@@ -8,6 +10,7 @@ import type {
   RoutePlanRecord,
 } from '@/types'
 
+export type { ActionLabel, TranslatableLabel }
 /**
  * Tiny persistence layer backed by localStorage, with a global undo/redo
  * history of full-state snapshots.
@@ -67,10 +70,11 @@ export const MAX_HISTORY_ENTRIES = 50
 type Listener = () => void
 
 /**
- * A mutation label: static text, or a function resolved once the related
- * changes are complete — so `"Assigned 3 orders to Ahmed"` can count first.
+ * A mutation label is a STRUCTURED value (translation key + params) or a
+ * plain string, so history entries and toasts render in the language
+ * active at viewing time. Function labels are resolved once at record
+ * time — `"Assigned 3 orders to Ahmed"` can count first.
  */
-export type ActionLabel = string | (() => string)
 
 interface Store<T> {
   get(): T
@@ -92,7 +96,8 @@ const stores: Store<unknown>[] = []
 // ---------------------------------------------------------------------------
 
 interface HistoryEntry {
-  label: string
+  /** Structured or plain label; displayed via translateAction. */
+  label: string | TranslatableLabel
   /** Serialized snapshot of ALL collections, taken before the change. */
   state: string
 }
@@ -103,7 +108,6 @@ const redoStack: HistoryEntry[] = []
 let transactionDepth = 0
 let transactionLabel: ActionLabel = ''
 let transactionEntry: HistoryEntry | null = null
-
 /** Entry pushed for the current synchronous tick (implicit grouping). */
 let pendingTickEntry: HistoryEntry | null = null
 
@@ -112,18 +116,21 @@ const historyListeners = new Set<Listener>()
 
 /**
  * Listeners for "a user action completed" — emitted AFTER the label of a
- * transaction is finalized. Used by the toast layer, never by React state.
+ * transaction is finalized, carrying the structured label. Used by the
+ * toast layer, never by React state.
  */
-const actionListeners = new Set<(label: string) => void>()
+const actionListeners = new Set<(label: string | TranslatableLabel) => void>()
 
-export function onActionAnnounced(listener: (label: string) => void): () => void {
+export function onActionAnnounced(
+  listener: (label: string | TranslatableLabel) => void,
+): () => void {
   actionListeners.add(listener)
   return () => {
     actionListeners.delete(listener)
   }
 }
 
-function announceAction(label: string): void {
+function announceAction(label: string | TranslatableLabel): void {
   for (const listener of actionListeners) listener(label)
 }
 
@@ -136,7 +143,7 @@ function restoreAll(serialized: string): void {
   stores.forEach((store, index) => store.restore(states[index]))
 }
 
-function pushEntry(label: string, announce = true): HistoryEntry {
+function pushEntry(label: string | TranslatableLabel, announce = true): HistoryEntry {
   const entry: HistoryEntry = { label, state: serializeAll() }
   undoStack.push(entry)
   if (undoStack.length > MAX_HISTORY_ENTRIES) undoStack.shift()
@@ -148,11 +155,20 @@ function pushEntry(label: string, announce = true): HistoryEntry {
   return entry
 }
 
-function resolveLabel(label: ActionLabel): string {
+/** Fallback when a label function throws — deliberately plain text. */
+const FALLBACK_LABEL = 'Changed data'
+
+/**
+ * Resolves a label value to its storable form: function labels are
+ * invoked once (their result may be a structured label or a string);
+ * everything else is stored as-is WITHOUT translating, so history
+ * entries display in the language active at viewing time.
+ */
+function resolveLabel(label: ActionLabel): string | TranslatableLabel {
   try {
-    return typeof label === 'function' ? label() : label
+    return normalizeLabel(label)
   } catch {
-    return 'Changed data'
+    return FALLBACK_LABEL
   }
 }
 
@@ -165,10 +181,7 @@ function captureHistorySnapshot(label: ActionLabel): void {
     // First mutation of the transaction owns the single snapshot; the
     // label is still pending, so do not announce it yet.
     if (transactionEntry === null) {
-      transactionEntry = pushEntry(
-        typeof transactionLabel === 'function' ? 'Working…' : transactionLabel,
-        false,
-      )
+      transactionEntry = pushEntry(resolveLabel(transactionLabel), false)
     }
     return
   }
@@ -216,12 +229,13 @@ export function endTransaction(): void {
   transactionDepth -= 1
   if (transactionDepth === 0) {
     if (transactionEntry !== null) {
-      transactionEntry.label = resolveLabel(transactionLabel)
+      const finalLabel = resolveLabel(transactionLabel)
+      transactionEntry.label = finalLabel
       transactionEntry = null
       historyVersion += 1
       for (const listener of historyListeners) listener()
       // Announce only now, when the label is final.
-      announceAction(resolveLabel(transactionLabel))
+      announceAction(finalLabel)
     }
     transactionLabel = ''
     pendingTickEntry = null
@@ -265,12 +279,12 @@ export function historyCanRedo(): boolean {
 }
 
 /** Label of the most recent action — the one the next undo would revert. */
-export function historyUndoLabel(): string | null {
+export function historyUndoLabel(): string | TranslatableLabel | null {
   return undoStack.at(-1)?.label ?? null
 }
 
 /** Label of the next redo (the most recently undone action). */
-export function historyRedoLabel(): string | null {
+export function historyRedoLabel(): string | TranslatableLabel | null {
   return redoStack.at(-1)?.label ?? null
 }
 
@@ -293,10 +307,10 @@ export const history = {
 export interface HistoryInfo {
   canUndo: boolean
   canRedo: boolean
-  /** What the next undo would revert, e.g. `"Deleted product Milk"`. */
-  lastAction: string | null
-  /** What the next redo would re-apply. */
-  redoAction: string | null
+  /** Structured label of what the next undo would revert. */
+  lastAction: string | TranslatableLabel | null
+  /** Structured label of what the next redo would re-apply. */
+  redoAction: string | TranslatableLabel | null
   undo: () => boolean
   redo: () => boolean
 }
@@ -358,7 +372,7 @@ function createPersistedStore<T>(key: string, seed: T): Store<T> {
       return current
     },
     set(next, label) {
-      captureHistorySnapshot(label ?? 'Changed data') // snapshot BEFORE the write
+      captureHistorySnapshot(label ?? FALLBACK_LABEL) // snapshot BEFORE the write
       current = next
       try {
         localStorage.setItem(storageKey, JSON.stringify(next))
@@ -402,13 +416,16 @@ export interface Collection<T> {
   subscribe(listener: Listener): () => void
 }
 
-/** Human-friendly nouns for default labels, e.g. `"Deleted product"`. */
-const COLLECTION_NOUNS: Record<string, string> = {
-  products: 'product',
-  inventory: 'inventory item',
-  orders: 'order',
-  drivers: 'driver',
-  routePlans: 'route plan',
+/**
+ * Default history labels for bare collection writes — translation keys so
+ * even unlabelled mutations render in the active language.
+ */
+const CRUD_SUFFIX: Record<string, string> = {
+  products: 'Product',
+  inventory: 'Inventory',
+  orders: 'Order',
+  drivers: 'Driver',
+  routePlans: 'RoutePlan',
 }
 
 function createCollection<T>(
@@ -417,20 +434,21 @@ function createCollection<T>(
   getKey: (item: T) => string,
 ): Collection<T> {
   const store = createPersistedStore<T[]>(key, seed)
-  const noun = COLLECTION_NOUNS[key] ?? key
+  const suffix = CRUD_SUFFIX[key] ?? key
+  const crud = (verb: string): TranslatableLabel => ({ key: `crud.${verb}${suffix}` })
   return {
     all: () => store.get(),
-    save: (items, label) => store.set(items, label ?? `Replaced ${key}`),
-    add: (item, label) => store.set([item, ...store.get()], label ?? `Added ${noun}`),
+    save: (items, label) => store.set(items, label ?? crud('replaced')),
+    add: (item, label) => store.set([item, ...store.get()], label ?? crud('added')),
     update: (key, patch, label) =>
       store.set(
         store.get().map((item) => (getKey(item) === key ? { ...item, ...patch } : item)),
-        label ?? `Updated ${noun}`,
+        label ?? crud('updated'),
       ),
     remove: (key, label) =>
       store.set(
         store.get().filter((item) => getKey(item) !== key),
-        label ?? `Deleted ${noun}`,
+        label ?? crud('deleted'),
       ),
     subscribe: store.subscribe,
   }
@@ -472,5 +490,5 @@ export function clearAllData(): void {
   redoStack.length = 0
   historyVersion += 1
   for (const listener of historyListeners) listener()
-  announceAction('Cleared all data — cannot be undone')
+  announceAction({ key: 'actions.clearedAll' })
 }

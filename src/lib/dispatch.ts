@@ -1,6 +1,7 @@
 import { mutateOrder } from './orders'
 import { db, runTransaction } from './store'
-import { DRIVER_STATUS_LABEL_EN } from './status'
+import type { TranslatableLabel } from './store'
+import { DRIVER_STATUS_KEYS } from './status'
 import type { DriverStatus, Order } from '@/types'
 
 /** Dispatch helpers: assigning pending orders to drivers, incl. geo clustering. */
@@ -71,7 +72,11 @@ export function syncDriverStatusAfterOrderEvent(
     db.drivers.update(
       driver.id,
       { status: next },
-      `Set ${driver.name} to ${DRIVER_STATUS_LABEL_EN[next]}`,
+      // Nested label: the status word resolves in the viewing language.
+      {
+        key: 'actions.setDriverStatus',
+        params: { name: driver.name, status: { key: DRIVER_STATUS_KEYS[next] } },
+      },
     )
   }
 }
@@ -87,8 +92,7 @@ export function startDriverRoute(driverId: string): { started: number } {
 
   let started = 0
   return runTransaction(
-    () =>
-      `Started ${driver.name}'s route — moved ${started} stop${started === 1 ? '' : 's'} in transit`,
+    () => ({ key: 'actions.startedRoute', params: { name: driver.name, count: started } }),
     () => {
       const stops = db.orders
         .all()
@@ -113,7 +117,7 @@ export function startDriverRoute(driverId: string): { started: number } {
 export interface AssignResult {
   ok: boolean
   assigned?: number
-  error?: string
+  error?: TranslatableLabel
 }
 
 export function assignOrders(
@@ -122,15 +126,15 @@ export function assignOrders(
 ): AssignResult {
   let assigned = 0
   const driver = db.drivers.all().find((entry) => entry.id === driverId)
-  if (!driver) return { ok: false, error: 'Unknown driver.' }
+  if (!driver) return { ok: false, error: { key: 'errors.unknownDriver' } }
   if (driver.status === 'off_duty') {
     return {
       ok: false,
-      error: `${driver.name} is off duty — set them back on the roster before assigning orders.`,
+      error: { key: 'errors.driverOffDuty', params: { name: driver.name } },
     }
   }
   runTransaction(
-    () => `Assigned ${assigned} order${assigned === 1 ? '' : 's'} to ${driver.name}`,
+    () => ({ key: 'actions.assignedOrders', params: { count: assigned, name: driver.name } }),
     () => {
       for (const orderId of orderIds) {
         const order = db.orders.all().find((entry) => entry.id === orderId)
@@ -148,7 +152,7 @@ export interface AutoAssignResult {
   ok: boolean
   assigned?: number
   driversUsed?: number
-  error?: string
+  error?: TranslatableLabel
 }
 
 /** Casablanca approx.: 1° longitude ≈ cos(lat) of the km of 1° latitude. */
@@ -163,17 +167,23 @@ export function autoAssignPendingOrders(): AutoAssignResult {
   const pending = db.orders.all().filter((order) => order.status === 'pending')
   const available = db.drivers.all().filter((driver) => driver.status === 'available')
 
-  if (pending.length === 0) return { ok: false, error: 'No pending orders to assign.' }
-  if (available.length === 0) return { ok: false, error: 'No available drivers right now.' }
+  if (pending.length === 0) return { ok: false, error: { key: 'errors.autoAssignNoPending' } }
+  if (available.length === 0) return { ok: false, error: { key: 'errors.autoAssignNoDrivers' } }
 
   const clusterCount = Math.min(available.length, pending.length)
   let assignedTotal = 0
   let driversUsedTotal = 0
 
-  // The entire clustering + assignment batch is ONE undoable step.
+  // The entire clustering + assignment batch is ONE undoable step. The
+  // two counts render via nested plural keys ("3 orders across 2 drivers").
   return runTransaction(
-    () =>
-      `Auto-assigned ${assignedTotal} order${assignedTotal === 1 ? '' : 's'} across ${driversUsedTotal} driver${driversUsedTotal === 1 ? '' : 's'}`,
+    () => ({
+      key: 'actions.autoAssigned',
+      params: {
+        orders: { key: 'words.orderCount', count: assignedTotal },
+        drivers: { key: 'words.driverCount', count: driversUsedTotal },
+      },
+    }),
     () => {
       // Seed centroids spread across the latitude range for a decent start.
       const sortedByLat = [...pending].sort((a, b) => a.lat - b.lat)
@@ -222,7 +232,7 @@ export function autoAssignPendingOrders(): AutoAssignResult {
       assignedTotal = assigned
       driversUsedTotal = driversUsed
 
-      if (assigned === 0) return { ok: false, error: 'Could not assign any pending orders.' }
+      if (assigned === 0) return { ok: false, error: { key: 'errors.autoAssignFailed' } }
       return { ok: true, assigned, driversUsed }
     },
   )

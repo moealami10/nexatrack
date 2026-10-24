@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/Button'
 import { Field, inputClasses } from '@/components/ui/Field'
 import { Modal } from '@/components/ui/Modal'
+import type { ActionLabel } from '@/lib/actionLabel'
+import { translateAction } from '@/lib/actionLabel'
 import { tryCreateOrder } from '@/lib/orders'
 import { DEFAULT_SERVICE_MINUTES, parseHhmm } from '@/lib/routing'
 import { db, newId, useCollection } from '@/lib/store'
@@ -19,6 +22,7 @@ interface Row {
 }
 
 export default function NewOrderModal({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation()
   const products = useCollection(db.products)
 
   const [customerName, setCustomerName] = useState('')
@@ -31,7 +35,7 @@ export default function NewOrderModal({ onClose }: { onClose: () => void }) {
   const [windowStart, setWindowStart] = useState('')
   const [windowEnd, setWindowEnd] = useState('')
   const [serviceMinutes, setServiceMinutes] = useState('5')
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<ActionLabel | null>(null)
 
   function setRow(index: number, patch: Partial<Row>) {
     setRows((current) =>
@@ -59,20 +63,20 @@ export default function NewOrderModal({ onClose }: { onClose: () => void }) {
     const destination = address.trim()
 
     if (!name || !destination || items.length === 0) {
-      setError('Customer name, address, and at least one item are required.')
+      setError({ key: 'errors.orderFieldsRequired' })
       return
     }
 
     // Delivery window: optional, but complete and sensible when given.
     if ((windowStart && !windowEnd) || (!windowStart && windowEnd)) {
-      setError('The delivery window needs both a start and an end time.')
+      setError({ key: 'errors.windowIncomplete' })
       return
     }
     if (windowStart && windowEnd) {
       const start = parseHhmm(windowStart)
       const end = parseHhmm(windowEnd)
       if (start === null || end === null || start >= end) {
-        setError('The delivery window must end after it starts.')
+        setError({ key: 'errors.windowInvalid' })
         return
       }
     }
@@ -81,7 +85,7 @@ export default function NewOrderModal({ onClose }: { onClose: () => void }) {
     const service =
       serviceMinutes.trim() === '' ? undefined : Math.floor(Number(serviceMinutes) || 0)
     if (service !== undefined && (service < 0 || service > 240)) {
-      setError('Service time must be between 0 and 240 minutes.')
+      setError({ key: 'errors.serviceRange' })
       return
     }
 
@@ -102,50 +106,50 @@ export default function NewOrderModal({ onClose }: { onClose: () => void }) {
     if (result.ok) {
       onClose()
     } else {
-      setError(result.error ?? 'The order could not be created.')
+      setError(result.error ?? { key: 'errors.cannotCreateOrder' })
     }
   }
 
   return (
-    <Modal title="New order" onClose={onClose}>
+    <Modal title={t('orders.formTitle')} onClose={onClose}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {error && (
           <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-inset ring-red-300">
-            {error}
+            {translateAction(error)}
           </p>
         )}
 
         <div className="grid grid-cols-2 gap-4">
-          <Field label="Customer name">
+          <Field label={t('orders.fieldName')}>
             <input
               value={customerName}
               onChange={(event) => setCustomerName(event.target.value)}
-              placeholder="Anas Haddadi"
+              placeholder={t('orders.fieldNamePlaceholder')}
               className={inputClasses}
               autoFocus
             />
           </Field>
-          <Field label="Address">
+          <Field label={t('orders.fieldAddress')}>
             <input
               value={address}
               onChange={(event) => setAddress(event.target.value)}
-              placeholder="31 Rue Al Andalous, Oasis"
+              placeholder={t('orders.fieldAddressPlaceholder')}
               className={inputClasses}
             />
           </Field>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <Field label="Latitude">
+          <Field label={t('orders.fieldLat')}>
             <input value={lat} onChange={(event) => setLat(event.target.value)} className={inputClasses} />
           </Field>
-          <Field label="Longitude">
+          <Field label={t('orders.fieldLng')}>
             <input value={lng} onChange={(event) => setLng(event.target.value)} className={inputClasses} />
           </Field>
         </div>
 
         <div className="grid grid-cols-3 gap-4">
-          <Field label="Window start (optional)">
+          <Field label={t('orders.fieldWindowStart')}>
             <input
               type="time"
               value={windowStart}
@@ -153,7 +157,7 @@ export default function NewOrderModal({ onClose }: { onClose: () => void }) {
               className={inputClasses}
             />
           </Field>
-          <Field label="Window end (optional)">
+          <Field label={t('orders.fieldWindowEnd')}>
             <input
               type="time"
               value={windowEnd}
@@ -161,7 +165,7 @@ export default function NewOrderModal({ onClose }: { onClose: () => void }) {
               className={inputClasses}
             />
           </Field>
-          <Field label="Service min.">
+          <Field label={t('orders.fieldService')}>
             <input
               value={serviceMinutes}
               onChange={(event) => setServiceMinutes(event.target.value)}
@@ -172,7 +176,9 @@ export default function NewOrderModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="rounded-lg border border-slate-200 p-3">
-          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">Items</p>
+          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+            {t('orders.itemsTitle')}
+          </p>
           <div className="flex flex-col gap-2">
             {rows.map((row, index) => (
               <div key={index} className="flex items-center gap-2">
@@ -180,7 +186,7 @@ export default function NewOrderModal({ onClose }: { onClose: () => void }) {
                   value={row.productId}
                   onChange={(event) => setRow(index, { productId: event.target.value })}
                   className={inputClasses}
-                  aria-label="Product"
+                  aria-label={t('orders.productAria')}
                 >
                   {products.map((product: Product) => (
                     <option key={product.id} value={product.id}>
@@ -192,13 +198,13 @@ export default function NewOrderModal({ onClose }: { onClose: () => void }) {
                   value={row.qty}
                   onChange={(event) => setRow(index, { qty: event.target.value })}
                   inputMode="numeric"
-                  aria-label="Quantity"
+                  aria-label={t('orders.quantityAria')}
                   className="w-20 rounded-lg border border-slate-300 px-2 py-2 text-sm"
                 />
                 <button
                   type="button"
                   onClick={() => removeRow(index)}
-                  aria-label="Remove item"
+                  aria-label={t('orders.removeItemAria')}
                   className="rounded-lg p-2 text-slate-400 transition hover:bg-red-50 hover:text-red-600"
                   disabled={rows.length === 1}
                 >
@@ -212,16 +218,16 @@ export default function NewOrderModal({ onClose }: { onClose: () => void }) {
             onClick={addRow}
             className="mt-3 text-sm font-medium text-slate-600 transition hover:text-slate-900"
           >
-            + Add another item
+            {t('orders.addAnotherItem')}
           </button>
         </div>
 
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button type="submit" disabled={products.length === 0}>
-            Create order
+            {t('orders.createOrder')}
           </Button>
         </div>
       </form>

@@ -29,9 +29,7 @@ const CURRENT_DOT: Record<StepStatus, string> = {
  * followed by a red/gray terminal node.
  */
 export function StatusTimeline({ order }: { order: Order }) {
-  // Subscribe for instant updates when the language switches; the labels
-  // below come from orderStatusLabel(), which reads the language live.
-  useTranslation()
+  const { t } = useTranslation()
   const isFailed = order.status === 'failed'
   const isTerminal = isFailed || order.status === 'cancelled'
   const currentIndex = STEPS.findIndex((step) => step === order.status)
@@ -72,7 +70,11 @@ export function StatusTimeline({ order }: { order: Order }) {
             }`}
           >
             {row.label}
-            {row.isCurrent && <span className="ml-2 text-xs font-normal text-slate-400">current</span>}
+            {row.isCurrent && (
+              <span className="ml-2 text-xs font-normal text-slate-400">
+                {t('orders.timelineCurrent')}
+              </span>
+            )}
           </p>
           {(row.isDone || row.isCurrent) && row.at && (
             <p className="mt-0.5 text-xs text-slate-400">{formatDateTime(row.at)}</p>
@@ -89,7 +91,7 @@ export function StatusTimeline({ order }: { order: Order }) {
             }`}
           />
           <p className={`text-sm font-semibold ${isFailed ? 'text-red-700' : 'text-slate-600'}`}>
-            {isFailed ? 'Delivery failed' : 'Order cancelled'}
+            {isFailed ? t('orders.timelineTerminalFailed') : t('orders.timelineTerminalCancelled')}
           </p>
           {timestamps.get(order.status) && (
             <p className="mt-0.5 text-xs text-slate-400">
@@ -100,7 +102,9 @@ export function StatusTimeline({ order }: { order: Order }) {
       )}
 
       {!isTerminal && (
-        <p className="mt-4 text-xs text-slate-400">Placed {formatDateTime(placedAt)}</p>
+        <p className="mt-4 text-xs text-slate-400">
+          {t('orders.timelinePlaced', { date: formatDateTime(placedAt) })}
+        </p>
       )}
     </ol>
   )
