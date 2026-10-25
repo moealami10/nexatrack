@@ -38,12 +38,12 @@ export type { ActionLabel, TranslatableLabel }
  * - The history itself is never persisted; only the current data is.
  */
 
-const STORAGE_PREFIX = 'nexatrack:v3:'
+const STORAGE_PREFIX = 'nexatrack:v4:'
 /**
  * Key prefixes of earlier app versions. Data under them is wiped once on
  * load — never migrated, so stale demo or user data can't resurface.
  */
-const LEGACY_PREFIXES = ['nexatrack:v2:', 'deliveryhub:']
+const LEGACY_PREFIXES = ['nexatrack:v3:', 'nexatrack:v2:', 'deliveryhub:']
 
 /**
  * One-time migration from any previous version: every key under a legacy
@@ -467,6 +467,65 @@ export const db = {
   drivers: createCollection<Driver>('drivers', [], (driver) => driver.id),
   routePlans: createCollection<RoutePlanRecord>('routePlans', [], (record) => record.driverId),
 } as const
+
+// ---------------------------------------------------------------------------
+// Location-data sanitizer (v4+)
+// ---------------------------------------------------------------------------
+// Detects stale Casablanca / out-of-bounds orders (e.g. from an older build
+// or hand-edited storage) and wipes orders, drivers and route plans so old
+// location data can never resurface. Products and inventory are location-free
+// and are kept.
+const CASABLANCA_NAMES = [
+  'casablanca',
+  'maarif',
+  'ain diab',
+  'sidi maarouf',
+  'ain sebaa',
+  'derb sultan',
+  'bouskoura',
+  'hay hassani',
+  'oulfa',
+  'gauthier',
+  'anfa',
+  'roches noires',
+  'bernoussi',
+]
+
+function isCasablancaText(value: string): boolean {
+  const lower = value.toLowerCase()
+  if (lower.includes('casablanca') || lower.includes('casa')) return true
+  return CASABLANCA_NAMES.some((name) => lower.includes(name))
+}
+
+function orderHasInvalidLocation(order: Order): boolean {
+  if (
+    order.lat < location.bounds.minLat ||
+    order.lat > location.bounds.maxLat ||
+    order.lng < location.bounds.minLng ||
+    order.lng > location.bounds.maxLng
+  ) {
+    return true
+  }
+  if (isCasablancaText(order.customerName) || isCasablancaText(order.address)) {
+    return true
+  }
+  return false
+}
+
+export function sanitizeLocationData(): void {
+  try {
+    const orders = db.orders.all()
+    if (orders.some(orderHasInvalidLocation)) {
+      db.orders.save([])
+      db.drivers.save([])
+      db.routePlans.save([])
+    }
+  } catch {
+    // Storage unavailable: leave cleanup for next load.
+  }
+}
+
+sanitizeLocationData()
 
 /** React hook: renders the calling component whenever `collection` changes. */
 export function useCollection<T>(collection: Collection<T>): T[] {

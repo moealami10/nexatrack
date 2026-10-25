@@ -79,8 +79,8 @@ describe('demo data install', () => {
 
     demoData.installDemoData()
 
-    expect(JSON.parse(storage().getItem('nexatrack:v3:products')!).length).toBeGreaterThan(0)
-    expect(JSON.parse(storage().getItem('nexatrack:v3:orders')!).length).toBeGreaterThan(0)
+    expect(JSON.parse(storage().getItem('nexatrack:v4:products')!).length).toBeGreaterThan(0)
+    expect(JSON.parse(storage().getItem('nexatrack:v4:orders')!).length).toBeGreaterThan(0)
   })
 })
 
@@ -107,11 +107,11 @@ describe('clear all data', () => {
 
     // Storage reflects the empty state, not deleted keys.
     for (const key of [
-      'nexatrack:v3:products',
-      'nexatrack:v3:inventory',
-      'nexatrack:v3:orders',
-      'nexatrack:v3:drivers',
-      'nexatrack:v3:routePlans',
+      'nexatrack:v4:products',
+      'nexatrack:v4:inventory',
+      'nexatrack:v4:orders',
+      'nexatrack:v4:drivers',
+      'nexatrack:v4:routePlans',
     ]) {
       expect(storage().getItem(key)).toBe('[]')
     }

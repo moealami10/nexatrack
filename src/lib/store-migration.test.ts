@@ -39,12 +39,12 @@ async function loadStore() {
 }
 
 /** The five v3 collection keys every fresh install must persist. */
-const V3_COLLECTION_KEYS = [
-  'nexatrack:v3:products',
-  'nexatrack:v3:inventory',
-  'nexatrack:v3:orders',
-  'nexatrack:v3:drivers',
-  'nexatrack:v3:routePlans',
+const V4_COLLECTION_KEYS = [
+  'nexatrack:v4:products',
+  'nexatrack:v4:inventory',
+  'nexatrack:v4:orders',
+  'nexatrack:v4:drivers',
+  'nexatrack:v4:routePlans',
 ]
 
 function storage(): StorageShim {
@@ -55,7 +55,7 @@ describe('legacy data migration (wipe semantics)', () => {
   it('a fresh install loads empty collections and persists [] baselines', async () => {
     await loadStore()
 
-    for (const key of V3_COLLECTION_KEYS) {
+    for (const key of V4_COLLECTION_KEYS) {
       expect(storage().getItem(key)).toBe('[]')
     }
   })
@@ -77,9 +77,9 @@ describe('legacy data migration (wipe semantics)', () => {
       .filter(([key]) => key.startsWith('nexatrack:v2:'))
     expect(remainingLegacy).toEqual([])
     // …and the new collections are empty, not seeded with the old data.
-    expect(storage().getItem('nexatrack:v3:products')).toBe('[]')
-    expect(storage().getItem('nexatrack:v3:orders')).toBe('[]')
-    expect(storage().getItem('nexatrack:v3:routePlans')).toBe('[]')
+    expect(storage().getItem('nexatrack:v4:products')).toBe('[]')
+    expect(storage().getItem('nexatrack:v4:orders')).toBe('[]')
+    expect(storage().getItem('nexatrack:v4:routePlans')).toBe('[]')
   })
 
   it('also purges the earliest deliveryhub keys (v1/v2 alike)', async () => {
@@ -95,12 +95,12 @@ describe('legacy data migration (wipe semantics)', () => {
   it('purges legacy keys even when the new v3 keys already exist', async () => {
     const legacy = storage()
     legacy.setItem('nexatrack:v2:drivers', '[{"id":"drv_old","name":"Old"}]')
-    legacy.setItem('nexatrack:v3:drivers', '[]')
+    legacy.setItem('nexatrack:v4:drivers', '[]')
 
     await loadStore()
 
     expect(legacy.getItem('nexatrack:v2:drivers')).toBeNull()
-    expect(legacy.getItem('nexatrack:v3:drivers')).toBe('[]')
+    expect(legacy.getItem('nexatrack:v4:drivers')).toBe('[]')
   })
 
   it('leaves unrelated keys untouched', async () => {
