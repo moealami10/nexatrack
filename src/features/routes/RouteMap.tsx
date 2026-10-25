@@ -9,10 +9,11 @@ import {
   Tooltip,
   useMap,
 } from 'react-leaflet'
-import { useTranslation } from 'react-i18next'
 import 'leaflet/dist/leaflet.css'
 
+import { useTranslation } from 'react-i18next'
 import { location } from '@/config/location'
+import { useOverlayActive } from '@/lib/useOverlayLock'
 import type { GeoPoint, Stop } from '@/lib/routing'
 
 function numberIcon(n: number, large: boolean): L.DivIcon {
@@ -67,6 +68,27 @@ function FocusController({
  * for comparison. On touch devices the pins get a 44px hit area and marker
  * taps report back so the stop list can scroll the matching row into view.
  */
+/** Disables map interaction while any overlay is open. */
+function MapInteractionLock() {
+  const map = useMap()
+  const overlayActive = useOverlayActive()
+  useEffect(() => {
+    const handlers = [
+      map.dragging,
+      map.scrollWheelZoom,
+      map.touchZoom,
+      map.doubleClickZoom,
+      map.boxZoom,
+    ]
+    if (overlayActive) {
+      for (const handler of handlers) handler.disable()
+    } else {
+      for (const handler of handlers) handler.enable()
+    }
+  }, [map, overlayActive])
+  return null
+}
+
 export default function RouteMap({
   depot,
   stops,
@@ -96,13 +118,16 @@ export default function RouteMap({
   const { t } = useTranslation()
 
   return (
-    <MapContainer center={toLatLng(depot)} zoom={location.defaultZoom} className="h-full w-full" scrollWheelZoom>
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+    <div className="relative z-0 isolate h-full w-full">
+      <MapContainer center={toLatLng(depot)} zoom={location.defaultZoom} className="h-full w-full" scrollWheelZoom>
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
 
-      <FocusController focusStopId={focusStopId} stops={stops} />
+        <MapInteractionLock />
+
+        <FocusController focusStopId={focusStopId} stops={stops} />
 
       <Marker position={toLatLng(depot)} icon={depotIcon(largeHit)}>
         <Tooltip {...TOOLTIP_OPTIONS}>{t('routes.mapDepotTooltip')}</Tooltip>
@@ -139,6 +164,7 @@ export default function RouteMap({
             pathOptions={{ color: '#64748b', weight: 3, opacity: 0.9 }}
           />
         ))}
-    </MapContainer>
+      </MapContainer>
+    </div>
   )
 }

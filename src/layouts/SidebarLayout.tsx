@@ -210,7 +210,7 @@ function MoreSheet({
   const { t } = useTranslation()
   useOverlayLock(onClose)
   return (
-    <div className="fixed inset-0 z-50 md:hidden" role="presentation">
+    <div className="fixed inset-0 z-modal md:hidden" role="presentation">
       <div className="absolute inset-0 bg-slate-900/50" onClick={onClose} />
       <div
         className="animate-sheet-in safe-area-bottom absolute inset-x-0 bottom-0 flex max-h-[85dvh] flex-col rounded-t-2xl bg-white shadow-xl"
@@ -306,7 +306,7 @@ function HistoryButton({
       </button>
       <span
         role="tooltip"
-        className="animate-tooltip-pop pointer-events-none absolute right-0 top-full z-50 mt-2 hidden whitespace-nowrap rounded-md bg-slate-800 px-2.5 py-1.5 text-xs font-medium text-white shadow-lg group-hover:block"
+        className="animate-tooltip-pop pointer-events-none absolute right-0 top-full z-tooltip mt-2 hidden whitespace-nowrap rounded-md bg-slate-800 px-2.5 py-1.5 text-xs font-medium text-white shadow-lg group-hover:block"
       >
         {tip}
       </span>
@@ -393,7 +393,7 @@ export default function SidebarLayout() {
   return (
     <div className="min-h-dvh bg-slate-100">
       {/* Full-height sidebar (desktop): brand at the very top */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col bg-slate-900 md:flex">
+      <aside className="fixed inset-y-0 left-0 z-sidebar hidden w-64 flex-col bg-slate-900 md:flex">
         <Brand />
         <SidebarNav onNavigate={() => undefined} />
         <SidebarFooter onLoadDemo={handleLoadDemo} onClear={() => setConfirmClear(true)} />
@@ -401,7 +401,7 @@ export default function SidebarLayout() {
 
       {/* Main column: sticky top bar + content — the only scroll area */}
       <div className="flex min-h-dvh flex-col md:ml-64">
-        <header className="safe-area-top sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 sm:px-6">
+        <header className="safe-area-top sticky top-0 z-sticky flex h-14 shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 sm:px-6">
           <div className="flex min-w-0 items-center gap-1.5">
             <span className="truncate text-sm font-medium text-slate-500">{pageLabel}</span>
           </div>
@@ -419,7 +419,7 @@ export default function SidebarLayout() {
       {/* Bottom tab bar (phone): 4 primary tabs + More */}
       <nav
         aria-label={t('common.menu')}
-        className="safe-area-bottom fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-slate-200 bg-white md:hidden"
+        className="safe-area-bottom fixed inset-x-0 bottom-0 z-bottombar grid grid-cols-5 border-t border-slate-200 bg-white md:hidden"
       >
         {TAB_ITEMS.map((item) => (
           <NavLink

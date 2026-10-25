@@ -1,5 +1,17 @@
 @import "tailwindcss";
 
+@theme {
+  --z-index-content: 0;
+  --z-index-sticky: 30;
+  --z-index-sidebar: 40;
+  --z-index-bottombar: 40;
+  --z-index-drawer: 50;
+  --z-index-sheet: 50;
+  --z-index-modal: 60;
+  --z-index-toast: 70;
+  --z-index-tooltip: 80;
+}
+
 /* --- Mobile helpers ------------------------------------------------------ */
 
 /* Hide scrollbars (filter chip rows, tab bars). */

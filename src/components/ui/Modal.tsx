@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 
 import { useOverlayLock } from '@/lib/useOverlayLock'
@@ -37,8 +38,8 @@ export function Modal({
   )
 
   if (isMobile) {
-    return (
-      <div className="fixed inset-0 z-50" role="presentation">
+    return createPortal(
+      <div className="fixed inset-0 z-modal" role="presentation">
         <div className="absolute inset-0 bg-slate-900/50" onClick={onClose} />
         <div
           className="animate-sheet-in absolute inset-0 flex flex-col bg-white"
@@ -59,12 +60,14 @@ export function Modal({
           )}
         </div>
       </div>
+      ,
+      document.body,
     )
   }
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
+      className="fixed inset-0 z-modal flex items-center justify-center bg-slate-900/50 p-4"
       onClick={onClose}
       role="presentation"
     >
@@ -86,6 +89,7 @@ export function Modal({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

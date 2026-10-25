@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 
 import { useOverlayLock } from '@/lib/useOverlayLock'
@@ -25,8 +26,8 @@ export function ActionSheet({
   const { t } = useTranslation()
   useOverlayLock(onClose)
 
-  return (
-    <div className="fixed inset-0 z-50" role="presentation">
+  return createPortal(
+    <div className="fixed inset-0 z-modal" role="presentation">
       <div className="absolute inset-0 bg-slate-900/50" onClick={onClose} />
       <div
         className="animate-sheet-in safe-area-bottom absolute inset-x-0 bottom-0 rounded-t-2xl bg-white shadow-xl"
@@ -66,6 +67,7 @@ export function ActionSheet({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
