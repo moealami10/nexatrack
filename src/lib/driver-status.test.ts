@@ -63,7 +63,7 @@ function mkOrder(
   return {
     id: newId('ord_t'),
     customerName: name,
-    address: '2 Test Road, Casablanca',
+    address: '2 Test Road, Laayoune',
     lat: 33.6,
     lng: -7.6,
     items: [{ productId, qty: 1 }],

@@ -1,3 +1,4 @@
+import { location } from '@/config/location'
 import { mutateOrder } from './orders'
 import { db, runTransaction } from './store'
 import type { TranslatableLabel } from './store'
@@ -155,8 +156,8 @@ export interface AutoAssignResult {
   error?: TranslatableLabel
 }
 
-/** Casablanca approx.: 1° longitude ≈ cos(lat) of the km of 1° latitude. */
-const LNG_SCALE = Math.cos((33.5 * Math.PI) / 180)
+/** 1° longitude ≈ cos(latitude) of the km of 1° latitude, at the city. */
+const LNG_SCALE = Math.cos((location.mapCenter.lat * Math.PI) / 180)
 
 /**
  * Splits pending orders across available drivers with one-dimensional-ish

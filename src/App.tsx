@@ -10,6 +10,7 @@ import DriversPage from '@/features/drivers/DriversPage'
 // Heaviest pages load on demand to keep the initial bundle small.
 const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage'))
 const RoutesPage = lazy(() => import('@/features/routes/RoutesPage'))
+const SettingsPage = lazy(() => import('@/features/settings/SettingsPage'))
 
 function PageLoader() {
   return (
@@ -29,6 +30,11 @@ const routesElement = (
     <RoutesPage />
   </Suspense>
 )
+const settingsElement = (
+  <Suspense fallback={<PageLoader />}>
+    <SettingsPage />
+  </Suspense>
+)
 
 export default function App() {
   return (
@@ -42,6 +48,7 @@ export default function App() {
         <Route path="orders" element={<OrdersPage />} />
         <Route path="drivers" element={<DriversPage />} />
         <Route path="routes" element={routesElement} />
+        <Route path="settings" element={settingsElement} />
       </Route>
       {/* Unknown URLs go home instead of rendering a blank page. */}
       <Route path="*" element={<Navigate to="/" replace />} />

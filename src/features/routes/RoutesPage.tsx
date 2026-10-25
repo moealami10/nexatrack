@@ -25,16 +25,13 @@ import {
   type TravelMatrix,
 } from '@/lib/routing'
 import { getDistanceMatrix, getRouteGeometry } from '@/lib/roadRouting'
-import { db, runTransaction, useCollection } from '@/lib/store'
+import { db, runTransaction, useCollection, useSettings } from '@/lib/store'
 import type { TranslatableLabel } from '@/lib/store'
 import { useIsMobile } from '@/lib/useIsMobile'
 import { driverStatusLabel, DRIVER_STATUS_TONE } from '@/lib/status'
 import type { Order } from '@/types'
 
 import RouteMap from './RouteMap'
-
-/** Depot: central Casablanca. Both ends of every driver's round trip. */
-const DEPOT: GeoPoint = { lat: 33.5731, lng: -7.5898 }
 
 function stopOf(order: Order): Stop {
   return {
@@ -53,6 +50,9 @@ export default function RoutesPage() {
   const drivers = useCollection(db.drivers)
   const orders = useCollection(db.orders)
   const routePlans = useCollection(db.routePlans)
+  const settings = useSettings()
+  /** Depot from Settings — both ends of every driver's round trip. */
+  const depot: GeoPoint = settings.depot
 
   const [driverId, setDriverId] = useState('')
   const [optimizing, setOptimizing] = useState(false)
@@ -109,7 +109,7 @@ export default function RoutesPage() {
   async function handleOptimize() {
     if (!driver || optimizing || driverOrders.length === 0) return
     const activeStops = driverOrders.map(stopOf)
-    const points = [DEPOT, ...activeStops]
+    const points = [depot, ...activeStops]
     setOptimizing(true)
     try {
       let matrix: TravelMatrix | undefined
@@ -122,7 +122,7 @@ export default function RoutesPage() {
         setApproximate(true)
       }
       const baselineTour = evaluateTour(points, matrix)
-      const baselineLateCount = scheduleTour(DEPOT, activeStops, {
+      const baselineLateCount = scheduleTour(depot, activeStops, {
         matrix,
         shiftStartMinutes,
       }).lateCount
@@ -152,7 +152,7 @@ export default function RoutesPage() {
           return { key: 'actions.optimizerNoChange', params: { name: driver.name } }
         },
         () => {
-          const plan = optimizeRoute(DEPOT, activeStops, {
+          const plan = optimizeRoute(depot, activeStops, {
             matrix,
             shiftStartMinutes,
           })
@@ -182,7 +182,7 @@ export default function RoutesPage() {
       setApproximate(false)
       return
     }
-    const points = [DEPOT, ...driverOrders.map(stopOf)]
+    const points = [depot, ...driverOrders.map(stopOf)]
     if (points.length < 2) {
       setBaseline({ distanceKm: 0, minutes: 0 })
       setApproximate(false)
@@ -217,7 +217,7 @@ export default function RoutesPage() {
       setRoadPath(null)
       return
     }
-    const points: GeoPoint[] = [DEPOT, ...displayedStops, DEPOT]
+    const points: GeoPoint[] = [depot, ...displayedStops, depot]
     let cancelled = false
     setRoadPath(null)
     getRouteGeometry(points)
@@ -251,15 +251,15 @@ export default function RoutesPage() {
     })
     let cancelled = false
     setSchedule(null)
-    getDistanceMatrix([DEPOT, ...stops])
+    getDistanceMatrix([depot, ...stops])
       .then((matrix) => {
         if (!cancelled) {
-          setSchedule(scheduleTour(DEPOT, stops, { matrix, shiftStartMinutes }))
+          setSchedule(scheduleTour(depot, stops, { matrix, shiftStartMinutes }))
         }
       })
       .catch(() => {
         if (!cancelled) {
-          setSchedule(scheduleTour(DEPOT, stops, { shiftStartMinutes }))
+          setSchedule(scheduleTour(depot, stops, { shiftStartMinutes }))
         }
       })
     return () => {
@@ -270,7 +270,7 @@ export default function RoutesPage() {
 
   // Baseline (road) numbers with the haversine estimate as the immediate
   // fallback while the matrix is loading or unusable.
-  const haversineKm = tourDistanceKm(DEPOT, driverOrders.map(stopOf))
+  const haversineKm = tourDistanceKm(depot, driverOrders.map(stopOf))
   const baselineKm = baseline?.distanceKm ?? haversineKm
   const baselineMinutes = baseline?.minutes ?? Math.round((haversineKm / AVERAGE_SPEED_KMH) * 60)
 
@@ -374,7 +374,7 @@ export default function RoutesPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="h-[45dvh] overflow-hidden rounded-xl border border-slate-200 shadow-sm md:h-[460px]">
           <RouteMap
-            depot={DEPOT}
+            depot={depot}
             stops={displayedStops}
             beforeStops={isOptimized ? driverOrders.map(stopOf) : null}
             roadPath={roadPath}
@@ -635,7 +635,7 @@ export default function RoutesPage() {
               message={
                 drivers.length === 0
                   ? t('routes.emptyNoDrivers')
-                  : t('routes.emptyPickDriver')
+                  : t('routes.emptyPickDriver', { city: settings.cityName })
               }
             />
           )}

@@ -12,6 +12,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import 'leaflet/dist/leaflet.css'
 
+import { location } from '@/config/location'
 import type { GeoPoint, Stop } from '@/lib/routing'
 
 function numberIcon(n: number, large: boolean): L.DivIcon {
@@ -95,7 +96,7 @@ export default function RouteMap({
   const { t } = useTranslation()
 
   return (
-    <MapContainer center={toLatLng(depot)} zoom={12} className="h-full w-full" scrollWheelZoom>
+    <MapContainer center={toLatLng(depot)} zoom={location.defaultZoom} className="h-full w-full" scrollWheelZoom>
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"

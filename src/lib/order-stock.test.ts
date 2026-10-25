@@ -60,9 +60,9 @@ describe('order status & inventory sync', () => {
     return {
       id: newId('ord_t'),
       customerName: name,
-      address: '1 Test Lane, Casablanca',
-      lat: 33.5,
-      lng: -7.6,
+      address: '1 Test Lane',
+      lat: 27.1,
+      lng: -13.2,
       items: [{ productId, qty }],
       status: 'pending',
       createdAt: new Date().toISOString(),

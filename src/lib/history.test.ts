@@ -56,9 +56,9 @@ describe('undo/redo history', () => {
     const draft: Order = {
       id: newId('ord_t'),
       customerName: 'Undo Buyer',
-      address: '12 Test Street, Casablanca',
-      lat: 33.5,
-      lng: -7.6,
+      address: '12 Test Street',
+      lat: 27.1,
+      lng: -13.2,
       items: [{ productId: inventoryRow.productId, qty: 3 }],
       status: 'pending',
       createdAt: new Date().toISOString(),
@@ -128,9 +128,9 @@ describe('undo/redo history', () => {
     const result = tryCreateOrder({
       id: newId('ord_t'),
       customerName: 'Greedy Buyer',
-      address: 'Nowhere, Casablanca',
-      lat: 33.55,
-      lng: -7.62,
+      address: 'Nowhere Street',
+      lat: 27.15,
+      lng: -13.22,
       items: [{ productId: inventoryRow.productId, qty: inventoryRow.quantity + 10_000 }],
       status: 'pending',
       createdAt: new Date().toISOString(),
@@ -202,7 +202,7 @@ describe('undo/redo history', () => {
     const plan: RoutePlanRecord['plan'] = {
       distanceKm: 5,
       estimatedMinutes: 10,
-      stops: [{ id: 'ord_x', lat: 33.5, lng: -7.6, label: 'Plan Stop' }],
+      stops: [{ id: 'ord_x', lat: 27.1, lng: -13.2, label: 'Plan Stop' }],
     }
 
     const statsBefore = history.stats()

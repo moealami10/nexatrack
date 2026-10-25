@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react'
 
 import type { ActionLabel, TranslatableLabel } from './actionLabel'
 import { normalizeLabel } from './actionLabel'
+import { location } from '@/config/location'
 import type {
   Driver,
   InventoryItem,
@@ -88,8 +89,12 @@ interface Store<T> {
 /** Key registry so `clearAllData` only touches our own keys. */
 const storageKeys = new Set<string>()
 
-/** Every live collection store, in stable order — drives snapshot/restore. */
-const stores: Store<unknown>[] = []
+/** Every live persisted store, in stable order — drives snapshot/restore. */
+const stores: Array<{
+  store: Store<unknown>
+  /** Value `clearAllData` restores this store to (collections: []). */
+  resetTo: unknown
+}> = []
 
 // ---------------------------------------------------------------------------
 // Global undo/redo history
@@ -135,12 +140,12 @@ function announceAction(label: string | TranslatableLabel): void {
 }
 
 function serializeAll(): string {
-  return JSON.stringify(stores.map((store) => store.get()))
+  return JSON.stringify(stores.map((entry) => entry.store.get()))
 }
 
 function restoreAll(serialized: string): void {
   const states = JSON.parse(serialized) as unknown[]
-  stores.forEach((store, index) => store.restore(states[index]))
+  stores.forEach((entry, index) => entry.store.restore(states[index]!))
 }
 
 function pushEntry(label: string | TranslatableLabel, announce = true): HistoryEntry {
@@ -397,7 +402,7 @@ function createPersistedStore<T>(key: string, seed: T): Store<T> {
       }
     },
   }
-  stores.push(store as Store<unknown>)
+  stores.push({ store: store as Store<unknown>, resetTo: seed })
   return store
 }
 
@@ -468,6 +473,49 @@ export function useCollection<T>(collection: Collection<T>): T[] {
   return useSyncExternalStore(collection.subscribe, collection.all, collection.all)
 }
 
+// ---------------------------------------------------------------------------
+// Settings (operating location)
+// ---------------------------------------------------------------------------
+
+/** Live, editable copy of the location defaults in src/config/location.ts. */
+export interface AppSettings {
+  cityName: string
+  depotName: string
+  depot: { lat: number; lng: number }
+}
+
+/** Shipped defaults — reset via the Settings page or `clearAllData`. */
+export const DEFAULT_SETTINGS: AppSettings = {
+  cityName: location.cityName,
+  depotName: location.defaultDepotName,
+  depot: { ...location.defaultDepot },
+}
+
+/**
+ * The settings singleton. Registered in the undo snapshot registry like
+ * every collection, so a settings change is one undoable step and undo/redo
+ * snapshots keep covering the full app state.
+ */
+const settingsStore = createPersistedStore<AppSettings>('settings', DEFAULT_SETTINGS)
+
+/** React hook: renders the calling component whenever settings change. */
+export function useSettings(): AppSettings {
+  return useSyncExternalStore(settingsStore.subscribe, settingsStore.get, settingsStore.get)
+}
+
+/** Persists new settings as ONE undoable entry (used by the Settings page). */
+export function updateSettings(next: AppSettings): void {
+  settingsStore.set(next, { key: 'actions.updatedSettings' })
+}
+
+/** Restores the shipped defaults from src/config/location.ts (undoable). */
+export function resetSettings(): void {
+  settingsStore.set(
+    { cityName: DEFAULT_SETTINGS.cityName, depotName: DEFAULT_SETTINGS.depotName, depot: { ...DEFAULT_SETTINGS.depot } },
+    { key: 'actions.resetSettings' },
+  )
+}
+
 /** Generate a short, prefixed entity ID for new records. */
 export function newId(prefix: string): string {
   const random =
@@ -483,8 +531,10 @@ export function newId(prefix: string): string {
  * first. Resets in-memory state (no reload) and persists empty arrays.
  */
 export function clearAllData(): void {
-  for (const store of stores) {
-    store.restore([])
+  for (const { store, resetTo } of stores) {
+    // Collections rediscover their [] baseline; settings reset to the
+    // shipped defaults from src/config/location.ts (NOT cleared away).
+    store.restore(resetTo)
   }
   undoStack.length = 0
   redoStack.length = 0

@@ -22,6 +22,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/orders', navKey: 'orders', icon: '🧾' },
   { to: '/drivers', navKey: 'drivers', icon: '🛵' },
   { to: '/routes', navKey: 'routes', icon: '🗺️' },
+  { to: '/settings', navKey: 'settings', icon: '⚙️' },
 ]
 
 /** Top-level tabs shown in the phone bottom bar; the rest live in "More". */
@@ -35,6 +36,7 @@ const TAB_ITEMS: NavItem[] = [
 const MORE_ITEMS: NavItem[] = [
   { to: '/products', navKey: 'products', icon: '📦' },
   { to: '/inventory', navKey: 'inventory', icon: '🗃️' },
+  { to: '/settings', navKey: 'settings', icon: '⚙️' },
 ]
 
 function navLabel(item: NavItem): string {

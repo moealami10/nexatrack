@@ -36,11 +36,12 @@
     "orders": "Orders",
     "drivers": "Drivers",
     "routes": "Routes",
+    "settings": "Settings",
     "more": "More"
   },
   "dashboard": {
     "title": "Dashboard",
-    "description": "Overview of your delivery operations in Casablanca.",
+    "description": "Overview of your delivery operations in {{city}}.",
     "ordersToday": "Orders today",
     "delivered": "Delivered",
     "deliveredHint_one": "{{delivered}} of {{total}} order",
@@ -143,7 +144,7 @@
     "fieldWindowEnd": "Window end (optional)",
     "fieldService": "Service min.",
     "fieldNamePlaceholder": "Anas Haddadi",
-    "fieldAddressPlaceholder": "31 Rue Al Andalous, Oasis",
+    "fieldAddressPlaceholder": "31 Av. Mekka, Bréma",
     "itemsTitle": "Items",
     "productAria": "Product",
     "quantityAria": "Quantity",
@@ -170,7 +171,8 @@
     "timelineCurrent": "current",
     "timelineTerminalFailed": "Delivery failed",
     "timelineTerminalCancelled": "Order cancelled",
-    "timelinePlaced": "Placed {{date}}"
+    "timelinePlaced": "Placed {{date}}",
+    "farFromDepot": "This point is about {{km}} km from the depot in {{city}} — double-check the coordinates."
   },
   "drivers": {
     "title": "Drivers",
@@ -244,7 +246,18 @@
     "routeRunningHint": "Route running — mark each stop as it completes.",
     "startRouteHint": "Press “Start route” to put every stop in transit.",
     "emptyNoDrivers": "Add a driver and assign orders to plan a route.",
-    "emptyPickDriver": "Pick a driver above to see their stops around Casablanca."
+    "emptyPickDriver": "Pick a driver above to see their stops around {{city}}."
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Where your operation runs and where deliveries start.",
+    "cityName": "City name",
+    "depotName": "Depot name",
+    "depotHint": "Type the coordinates below or click the map to move the depot. Routes, new orders, and auto-assign all start from here.",
+    "depotLat": "Depot latitude",
+    "depotLng": "Depot longitude",
+    "resetDefaults": "Reset to defaults",
+    "saved": "Settings saved."
   },
   "status": {
     "order": {
@@ -332,7 +345,9 @@
     "deletedProduct": "Deleted product {{name}}",
     "addedDriver": "Added driver {{name}}",
     "updatedDriver": "Updated driver {{name}}",
-    "deletedDriver": "Deleted driver {{name}}"
+    "deletedDriver": "Deleted driver {{name}}",
+    "updatedSettings": "Updated location settings",
+    "resetSettings": "Reset location settings to defaults"
   },
   "crud": {
     "addedProduct": "Added product",

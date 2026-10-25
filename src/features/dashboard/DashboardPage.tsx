@@ -19,7 +19,7 @@ import { formatDateTime, formatCurrency } from '@/lib/format'
 import { buildProductIndex, getOrderTotal, summarizeOrderItems } from '@/lib/orders'
 import { ORDER_STATUS_TONE, orderStatusLabel } from '@/lib/status'
 import { useIsMobile } from '@/lib/useIsMobile'
-import { db, useCollection } from '@/lib/store'
+import { db, useCollection, useSettings } from '@/lib/store'
 import type { OrderStatus } from '@/types'
 
 import { getDashboardStats } from './stats'
@@ -37,6 +37,7 @@ const STATUS_COLORS: Record<OrderStatus, string> = {
 export default function DashboardPage() {
   const { t } = useTranslation()
   const isMobile = useIsMobile()
+  const settings = useSettings()
   const products = useCollection(db.products)
   const inventory = useCollection(db.inventory)
   const orders = useCollection(db.orders)
@@ -72,7 +73,7 @@ export default function DashboardPage() {
     <>
       <PageHeader
         title={t('dashboard.title')}
-        description={t('dashboard.description')}
+        description={t('dashboard.description', { city: settings.cityName })}
       />
 
       {/* 2-col KPI grid on phones, unchanged 4-col from `lg` up */}

@@ -1,6 +1,6 @@
 # 🚚 NexaTrack
 
-A delivery-operations prototype for a Casablanca-based courier business:
+A delivery-operations prototype for a Laâyoune-based courier business:
 manage products and stock, take orders, dispatch drivers, and plan routes on
 a map — all in the browser, no backend required.
 
@@ -31,7 +31,7 @@ drivers, or route plans. Every page shows an empty state with the suggested
 next step (the Dashboard adds a getting-started checklist that ticks itself
 off as you go). When you want to see the app in action, use
 **📥 Load demo data** in the sidebar: it fills the app with a demo dataset
-(12 products, 12 inventory items, 5 drivers, 20 orders around Casablanca)
+(12 products, 12 inventory items, 5 drivers, 20 orders around Laâyoune)
 in one undoable step. Loading demo data while the app already has content
 asks for confirmation first, since it replaces everything. Everything you
 change is persisted to `localStorage` immediately — all collection keys are
@@ -135,16 +135,40 @@ layout (≥768px) is untouched.
 | **Orders** | Status chips + search (pending / assigned / in transit / delivered / failed / **cancelled**), new-order modal (blocks creation when stock is insufficient; optional **delivery window** start/end and **service minutes**, default 5), detail drawer with a status timeline, delivery window/service display, driver assignment, Mark failed / Cancel order / Reactivate order; stock is deducted on creation, **returned once on fail/cancel** (guarded against double return), and re-deducted on reactivate (blocked with a clear error when stock is insufficient) |
 | **Drivers** | Driver cards (name, phone, status, vehicle, active order count) with **add / edit / delete** (undoable), a manual status cycle, multi-select "Assign orders" flow, "Auto-assign" geoclustering of pending orders. Status is **automatic while a manual override wins**: assignment alone doesn't change it; the first in-transit stop puts an available driver on route; no active orders → available again; off-duty drivers can't be assigned (clear error) and are excluded from auto-assign, and their off-duty state is never overridden |
 | **Routes** | Driver picker + OpenStreetMap (react-leaflet): depot and numbered stop markers, the route drawn as real **OSRM road geometry** (straight legs as fallback), road distances and durations with before/after savings — the saved plan is stored per driver (`routePlans` collection), undoable and persistent across reloads. A **shift start** time (default 08:00) drives per-stop **ETAs**: arrival times include travel, per-stop service, and **waiting for the delivery window to open**; stops that miss their window are flagged red with the minutes late, and the optimizer prioritizes lateness over distance. **▶ Start route** moves every assigned stop to in transit in one undo step (flips the driver on route); each in-transit stop has ✓ Delivered / ✕ Failed actions. An amber **"≈ approximate distances"** badge appears whenever road data is unavailable (haversine fallback) |
+| **Settings** | The operating location: **city name, depot name, and depot position** — type coordinates or **click the map to place the depot**. Saved to `localStorage` (`nexatrack:v3:settings`) as one undoable step; a **Reset to defaults** action is undoable too. Routes/optimizer, new-order defaults, and auto-assign all start from the saved depot; day keys ("orders today") and date formatting follow the city's timezone |
+
+## Location config
+
+The city, map center/zoom, depot defaults, the bounding box around the
+city, and the timezone live in **`src/config/location.ts`** — a single
+source of truth (shipped values: **Laâyoune**, map center 27.1536/-13.2033,
+zoom 13, `Africa/El_Aaiun`). The Settings page edits the *live* copy
+(persisted under `nexatrack:v3:settings`); everything below reads it:
+
+- the dashboard subtitle ("…operations in {{city}}") and the Routes empty
+  state,
+- the depot marker on the Routes map and the map's initial center/zoom,
+- the optimizer/auto-assign starting point (round trips start and end at
+  the depot),
+- the new-order form's default drop-off coordinates (an amber **warning —
+  never a block** — appears when a point is **more than 40 km from the
+  depot**),
+- the seed-integrity test, which asserts every demo order falls inside the
+  configured bounds,
+- day keys and date rendering, anchored to the configured timezone.
 
 ## Project structure
 
 ```
 src/
-├── types.ts             # Domain types (product, order, driver, route plan, …)
-├── lib/                 # Data + domain layers (the only API-swap point)
+├── types.ts               # Domain types (product, order, driver, route plan, …)
+├── config/
+│   └── location.ts        # Single source of location truth: city, map center
+│                          # + zoom, depot defaults, bounds, timezone
+├── lib/                   # Data + domain layers (the only API-swap point)
 │   ├── store.ts         # localStorage collections + undo/redo engine +
 │                        # hooks; wipes legacy-prefixed keys on load
-│   ├── seed.ts          # Demo dataset (Casablanca) — never auto-loaded
+│   ├── seed.ts          # Demo dataset (Laâyoune) — never auto-loaded
 │   ├── demoData.ts      # Optional "Load demo data" action (one undo step)
 │   ├── orders.ts        # Order totals, creation w/ stock validation, transitions
 │   ├── dispatch.ts      # Driver assignment + geographic auto-assign (k-means)
@@ -158,8 +182,8 @@ src/
 ├── components/ui/       # Badge, Button, Modal, Drawer, Table, Toast, StatCard, …
 ├── layouts/             # App shell: sticky top bar (Undo/Redo) + sidebar (desktop)
 │                        # / off-canvas drawer (mobile)
-└── features/            # One folder per page: dashboard, products, inventory,
-                         # orders, drivers, routes
+└── features/               # One folder per page: dashboard, products,
+                             # inventory, orders, drivers, routes, settings
 ```
 
 ## What is mocked
@@ -175,8 +199,8 @@ services exist:
   load — never migrated, so stale demo data can't resurface.
 - **Seed data is fictional (and optional).** The demo dataset loads only
   when you ask for it ("Load demo data"). Customer names are invented; addresses and
-  coordinates are plausible approximations of real Casablanca
-  neighborhoods, not geocoded house numbers. Prices are in MAD and roughly
+  coordinates are plausible approximations of real Laâyoune
+  quarters (Centre-ville, Bréma, Tarfa, Chiroka), not geocoded house numbers. Prices are in MAD and roughly
   realistic. About half the seed orders carry delivery windows (one is
   deliberately infeasible for an 08:00 shift to show the "late" flag).
 - **Inventory math is simplistic.** Stock is deducted when an order is

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { location } from '@/config/location'
 import { seedDrivers, seedInventory, seedOrders, seedProducts } from './seed'
 
 /**
@@ -12,8 +13,8 @@ const productIds = new Set(seedProducts.map((product) => product.id))
 const skuSet = new Set(seedProducts.map((product) => product.sku))
 const driverIds = new Set(seedDrivers.map((driver) => driver.id))
 
-// Loose bounding box around the Casablanca metro area.
-const CASABLANCA_BOUNDS = { minLat: 33.4, maxLat: 33.75, minLng: -7.9, maxLng: -7.4 }
+// The configured operating area (Laâyoune) — seed coords must stay inside.
+const { bounds } = location
 
 describe('seed integrity', () => {
   it('has 12 unique products', () => {
@@ -60,10 +61,10 @@ describe('seed integrity', () => {
       if (order.driverId !== undefined) {
         expect(driverIds.has(order.driverId)).toBe(true)
       }
-      expect(order.lat).toBeGreaterThan(CASABLANCA_BOUNDS.minLat)
-      expect(order.lat).toBeLessThan(CASABLANCA_BOUNDS.maxLat)
-      expect(order.lng).toBeGreaterThan(CASABLANCA_BOUNDS.minLng)
-      expect(order.lng).toBeLessThan(CASABLANCA_BOUNDS.maxLng)
+      expect(order.lat).toBeGreaterThan(bounds.minLat)
+      expect(order.lat).toBeLessThan(bounds.maxLat)
+      expect(order.lng).toBeGreaterThan(bounds.minLng)
+      expect(order.lng).toBeLessThan(bounds.maxLng)
     }
   })
 })

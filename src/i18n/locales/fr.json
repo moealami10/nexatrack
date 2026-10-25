@@ -36,11 +36,12 @@
     "orders": "Commandes",
     "drivers": "Livreurs",
     "routes": "Tournées",
+    "settings": "Paramètres",
     "more": "Plus"
   },
   "dashboard": {
     "title": "Tableau de bord",
-    "description": "Vue d'ensemble de vos opérations de livraison à Casablanca.",
+    "description": "Vue d'ensemble de vos opérations de livraison à {{city}}.",
     "ordersToday": "Commandes du jour",
     "delivered": "Livrées",
     "deliveredHint_one": "{{delivered}} sur {{total}} commande",
@@ -143,7 +144,7 @@
     "fieldWindowEnd": "Fin de créneau (facultatif)",
     "fieldService": "Service (min)",
     "fieldNamePlaceholder": "Anas Haddadi",
-    "fieldAddressPlaceholder": "31 Rue Al Andalous, Oasis",
+    "fieldAddressPlaceholder": "31 Av. Mekka, Bréma",
     "itemsTitle": "Articles",
     "productAria": "Produit",
     "quantityAria": "Quantité",
@@ -170,7 +171,8 @@
     "timelineCurrent": "en cours",
     "timelineTerminalFailed": "Livraison en échec",
     "timelineTerminalCancelled": "Commande annulée",
-    "timelinePlaced": "Passée le {{date}}"
+    "timelinePlaced": "Passée le {{date}}",
+    "farFromDepot": "Ce point est à environ {{km}} km du dépôt à {{city}} — vérifiez les coordonnées."
   },
   "drivers": {
     "title": "Livreurs",
@@ -244,7 +246,18 @@
     "routeRunningHint": "Tournée en cours — marquez chaque arrêt au fur et à mesure.",
     "startRouteHint": "Appuyez sur « Démarrer la tournée » pour passer tous les arrêts en cours de livraison.",
     "emptyNoDrivers": "Ajoutez un livreur et affectez des commandes pour planifier une tournée.",
-    "emptyPickDriver": "Choisissez un livreur ci-dessus pour voir ses arrêts autour de Casablanca."
+    "emptyPickDriver": "Choisissez un livreur ci-dessus pour voir ses arrêts autour de {{city}}."
+  },
+  "settings": {
+    "title": "Paramètres",
+    "description": "Où votre activité opère et d'où partent les livraisons.",
+    "cityName": "Nom de la ville",
+    "depotName": "Nom du dépôt",
+    "depotHint": "Saisissez les coordonnées ci-dessous ou cliquez sur la carte pour déplacer le dépôt. Les tournées, les nouvelles commandes et l'affectation auto partent toutes d'ici.",
+    "depotLat": "Latitude du dépôt",
+    "depotLng": "Longitude du dépôt",
+    "resetDefaults": "Rétablir les valeurs par défaut",
+    "saved": "Paramètres enregistrés."
   },
   "status": {
     "order": {
@@ -332,7 +345,9 @@
     "deletedProduct": "Produit {{name}} supprimé",
     "addedDriver": "Livreur {{name}} ajouté",
     "updatedDriver": "Livreur {{name}} modifié",
-    "deletedDriver": "Livreur {{name}} supprimé"
+    "deletedDriver": "Livreur {{name}} supprimé",
+    "updatedSettings": "Paramètres de localisation mis à jour",
+    "resetSettings": "Paramètres de localisation rétablis par défaut"
   },
   "crud": {
     "addedProduct": "Produit ajouté",

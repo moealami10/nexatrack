@@ -7,8 +7,9 @@ import type {
 } from '@/types'
 
 /**
- * Demo dataset for one Casablanca delivery operation. Neighborhood
- * coordinates are approximate but plausible for a prototype.
+ * Demo dataset for one Laâyoune delivery operation. Coordinates are
+ * approximate but plausible for inhabited city quarters (see the bounds in
+ * src/config/location.ts — seed.test.ts enforces them).
  *
  * This data is NEVER loaded automatically — a fresh app starts completely
  * empty (see src/lib/store.ts). It exists only for the optional
@@ -47,11 +48,11 @@ export const seedInventory: InventoryItem[] = [
 ]
 
 export const seedDrivers: Driver[] = [
-  { id: 'drv_001', name: 'Yassine El Amrani', phone: '+212 6 61 23 45 67', vehicle: 'Renault Kangoo — 1234-A-56', status: 'available' },
-  { id: 'drv_002', name: 'Salma Bennani', phone: '+212 6 62 34 56 78', vehicle: 'Fiat Fiorino — 5678-B-12', status: 'on_route' },
-  { id: 'drv_003', name: 'Karim Tazi', phone: '+212 6 63 45 67 89', vehicle: 'Dacia Dokker — 9012-C-34', status: 'on_route' },
-  { id: 'drv_004', name: 'Mona Idrissi', phone: '+212 6 64 56 78 90', vehicle: 'Peugeot Boxer — 3456-D-78', status: 'available' },
-  { id: 'drv_005', name: 'Hamid Chakir', phone: '+212 6 65 78 90 12', vehicle: 'Yamaha NMAX — 7890-E-90', status: 'off_duty' },
+  { id: 'drv_001', name: 'Sidi Mohamed Taleb', phone: '+212 6 61 23 45 67', vehicle: 'Renault Kangoo — 1234-A-56', status: 'available' },
+  { id: 'drv_002', name: 'Salma Boukhari', phone: '+212 6 62 34 56 78', vehicle: 'Fiat Fiorino — 5678-B-12', status: 'on_route' },
+  { id: 'drv_003', name: 'Karim Ould Sidi Ali', phone: '+212 6 63 45 67 89', vehicle: 'Dacia Dokker — 9012-C-34', status: 'on_route' },
+  { id: 'drv_004', name: 'Mariem Biadi', phone: '+212 6 64 56 78 90', vehicle: 'Peugeot Boxer — 3456-D-78', status: 'available' },
+  { id: 'drv_005', name: 'Hamid Bakhta', phone: '+212 6 65 78 90 12', vehicle: 'Yamaha NMAX — 7890-E-90', status: 'off_duty' },
 ]
 
 function items(...pairs: Array<[string, number]>): OrderItem[] {
@@ -61,9 +62,9 @@ function items(...pairs: Array<[string, number]>): OrderItem[] {
 export const seedOrders: Order[] = [
   {
     id: 'ord_001',
-    customerName: 'Omar Fassi',
-    address: '12 Rue des Roses, Maârif',
-    lat: 33.582, lng: -7.632,
+    customerName: 'Sidi Mohamed Laghdaf',
+    address: '12 Av. de la Marche Verte, Centre-ville',
+    lat: 27.1552, lng: -13.2055,
     items: items(['prd_001', 4], ['prd_006', 2], ['prd_011', 1]),
     status: 'delivered',
     driverId: 'drv_001',
@@ -74,9 +75,9 @@ export const seedOrders: Order[] = [
   },
   {
     id: 'ord_002',
-    customerName: 'Nadia Berrada',
-    address: '45 Av Hassan II, Sidi Belyout',
-    lat: 33.5765, lng: -7.5948,
+    customerName: 'Mariem Embarek',
+    address: '45 Av. Mekka, Bréma',
+    lat: 27.1447, lng: -13.1967,
     items: items(['prd_002', 1], ['prd_003', 2], ['prd_009', 1]),
     status: 'delivered',
     driverId: 'drv_003',
@@ -84,9 +85,9 @@ export const seedOrders: Order[] = [
   },
   {
     id: 'ord_003',
-    customerName: 'Hamza Lahlou',
-    address: '78 Bd Mohammed V, Bourgogne',
-    lat: 33.5941, lng: -7.6123,
+    customerName: 'El Fadel Braham',
+    address: '78 Bd Saguia el Hamra, Centre-ville',
+    lat: 27.1511, lng: -13.2033,
     items: items(['prd_005', 2], ['prd_007', 3], ['prd_006', 2]),
     status: 'delivered',
     driverId: 'drv_002',
@@ -96,9 +97,9 @@ export const seedOrders: Order[] = [
   },
   {
     id: 'ord_004',
-    customerName: 'Imane Chraibi',
-    address: '9 Rue Ibn Sina, Anfa',
-    lat: 33.6011, lng: -7.6347,
+    customerName: 'Zohra Mghizrat',
+    address: '9 Rue de Smara, Tarfa',
+    lat: 27.1663, lng: -13.2071,
     items: items(['prd_010', 1], ['prd_012', 1], ['prd_001', 3]),
     status: 'delivered',
     driverId: 'drv_004',
@@ -106,9 +107,9 @@ export const seedOrders: Order[] = [
   },
   {
     id: 'ord_005',
-    customerName: 'Yusuf Alaoui',
-    address: '22 Rue Al Manar, Ain Diab',
-    lat: 33.5932, lng: -7.6705,
+    customerName: 'Habib Ould Ali',
+    address: '22 Av. Mohammed V, Centre-ville',
+    lat: 27.1567, lng: -13.2022,
     items: items(['prd_011', 6], ['prd_003', 2]),
     status: 'delivered',
     driverId: 'drv_001',
@@ -119,9 +120,9 @@ export const seedOrders: Order[] = [
   },
   {
     id: 'ord_006',
-    customerName: 'Salma Daoudi',
-    address: '118 Bd Anfa, Gauthier',
-    lat: 33.5883, lng: -7.6271,
+    customerName: 'Yaya Derder',
+    address: '118 Av. des FAR, Bréma',
+    lat: 27.1456, lng: -13.1988,
     items: items(['prd_008', 5], ['prd_007', 2], ['prd_006', 1]),
     status: 'delivered',
     driverId: 'drv_002',
@@ -129,9 +130,9 @@ export const seedOrders: Order[] = [
   },
   {
     id: 'ord_007',
-    customerName: 'Anas Haddadi',
-    address: '31 Rue Al Andalous, Oasis',
-    lat: 33.5577, lng: -7.6334,
+    customerName: 'Souad Daf',
+    address: '31 Av. Mekka, Chiroka',
+    lat: 27.1487, lng: -13.2118,
     items: items(['prd_001', 2], ['prd_004', 1]),
     status: 'in_transit',
     driverId: 'drv_002',
@@ -141,9 +142,9 @@ export const seedOrders: Order[] = [
   },
   {
     id: 'ord_008',
-    customerName: 'Ghita Benjelloun',
-    address: '5 Rue du Sahara, CIL',
-    lat: 33.5977, lng: -7.6438,
+    customerName: 'Ghali Ould Mohameden',
+    address: '5 Av. Bou Craa, Centre-ville',
+    lat: 27.1524, lng: -13.2079,
     items: items(['prd_005', 1], ['prd_011', 2]),
     status: 'in_transit',
     driverId: 'drv_003',
@@ -154,9 +155,9 @@ export const seedOrders: Order[] = [
   },
   {
     id: 'ord_009',
-    customerName: 'Mounir Kabbaj',
-    address: '61 Bd Ouarka, Hay Hassani',
-    lat: 33.5701, lng: -7.637,
+    customerName: 'Nabil Sbai',
+    address: '61 Bd Saguia el Hamra, Tarfa',
+    lat: 27.1628, lng: -13.2009,
     items: items(['prd_003', 3], ['prd_009', 1], ['prd_010', 1]),
     status: 'in_transit',
     driverId: 'drv_002',
@@ -164,9 +165,9 @@ export const seedOrders: Order[] = [
   },
   {
     id: 'ord_010',
-    customerName: 'Sofia Amrani',
-    address: '17 Rue Tachfin, Belvédère',
-    lat: 33.5773, lng: -7.5819,
+    customerName: 'Aicha Bleouikh',
+    address: '17 Av. de la Marche Verte, Centre-ville',
+    lat: 27.1563, lng: -13.2044,
     items: items(['prd_007', 4], ['prd_006', 6]),
     status: 'assigned',
     driverId: 'drv_001',
@@ -176,9 +177,9 @@ export const seedOrders: Order[] = [
   },
   {
     id: 'ord_011',
-    customerName: 'Bilal Sefrioui',
-    address: '104 Bd Zerktouni, Maârif',
-    lat: 33.5846, lng: -7.6293,
+    customerName: 'Brahim Salama',
+    address: '104 Av. Mekka, Bréma',
+    lat: 27.1439, lng: -13.1974,
     items: items(['prd_002', 1], ['prd_012', 1]),
     status: 'assigned',
     driverId: 'drv_001',
@@ -186,9 +187,9 @@ export const seedOrders: Order[] = [
   },
   {
     id: 'ord_012',
-    customerName: 'Leila Mansouri',
-    address: '12 Rue du Lac Tanganyika, Californie',
-    lat: 33.5697, lng: -7.6502,
+    customerName: 'Khadija Saber',
+    address: '12 Rue de Smara, Chiroka',
+    lat: 27.1479, lng: -13.2104,
     items: items(['prd_001', 2], ['prd_011', 6], ['prd_010', 1]),
     status: 'assigned',
     driverId: 'drv_004',
@@ -198,9 +199,9 @@ export const seedOrders: Order[] = [
   },
   {
     id: 'ord_013',
-    customerName: 'Meryem Sqalli',
-    address: '48 Av Moulay Youssef, Derb Ghallef',
-    lat: 33.5847, lng: -7.6211,
+    customerName: 'Moustapha Ould Beibars',
+    address: '48 Av. Mohammed V, Centre-ville',
+    lat: 27.1538, lng: -13.2001,
     items: items(['prd_005', 3], ['prd_003', 1]),
     status: 'assigned',
     driverId: 'drv_004',
@@ -208,9 +209,9 @@ export const seedOrders: Order[] = [
   },
   {
     id: 'ord_014',
-    customerName: 'Rida Benali',
-    address: '133 Lotissement Oulfa, Oulfa',
-    lat: 33.5662, lng: -7.6441,
+    customerName: 'Fatimetou Ahmed Salem',
+    address: '133 Av. des FAR, Tarfa',
+    lat: 27.1683, lng: -13.2038,
     items: items(['prd_004', 2], ['prd_008', 2]),
     status: 'pending',
     createdAt: '2026-10-24T11:02:00+01:00',
@@ -220,18 +221,18 @@ export const seedOrders: Order[] = [
   },
   {
     id: 'ord_015',
-    customerName: 'Wassim Bakkali',
-    address: '6 Derb Ajdad, Habous',
-    lat: 33.5817, lng: -7.6175,
+    customerName: 'Oumeima Ghouil',
+    address: '6 Av. Mekka, Centre-ville',
+    lat: 27.1506, lng: -13.2011,
     items: items(['prd_009', 1], ['prd_003', 1], ['prd_006', 2]),
     status: 'pending',
     createdAt: '2026-10-24T11:14:00+01:00',
   },
   {
     id: 'ord_016',
-    customerName: 'Malak El Kabbaj',
-    address: '71 Bd Prince Moulay Rachid, Sidi Maarouf',
-    lat: 33.559, lng: -7.6733,
+    customerName: 'Hamma Rguibi',
+    address: '71 Av. de la Marche Verte, Chiroka',
+    lat: 27.1495, lng: -13.2142,
     items: items(['prd_006', 10], ['prd_001', 2]),
     status: 'pending',
     createdAt: '2026-10-24T11:36:00+01:00',
@@ -240,18 +241,18 @@ export const seedOrders: Order[] = [
   },
   {
     id: 'ord_017',
-    customerName: 'Naoufal Rahmouni',
-    address: '8 Rue des Astronomes, Cité Riad, Aïn Chock',
-    lat: 33.5403, lng: -7.6903,
+    customerName: 'Salek Ould Mbarak',
+    address: '8 Bd Saguia el Hamra, Tarfa',
+    lat: 27.1647, lng: -13.2049,
     items: items(['prd_007', 5], ['prd_008', 4]),
     status: 'pending',
     createdAt: '2026-10-24T11:52:00+01:00',
   },
   {
     id: 'ord_018',
-    customerName: 'Chaimae Toumi',
-    address: 'Rue des Jardins, Bouskoura',
-    lat: 33.5231, lng: -7.7002,
+    customerName: 'Tahra Mint Amor',
+    address: 'Rue de Smara, Centre-ville',
+    lat: 27.1519, lng: -13.2063,
     items: items(['prd_002', 1], ['prd_003', 4], ['prd_011', 2]),
     status: 'pending',
     createdAt: '2026-10-24T12:03:00+01:00',
@@ -261,9 +262,9 @@ export const seedOrders: Order[] = [
   },
   {
     id: 'ord_019',
-    customerName: 'Ilyas Rachidi',
-    address: '14 Rue 45, Sidi Moumen',
-    lat: 33.5671, lng: -7.5534,
+    customerName: 'El Ghali Kaddour',
+    address: '14 Av. Mekka, Bréma',
+    lat: 27.1452, lng: -13.1955,
     items: items(['prd_001', 3], ['prd_010', 1]),
     status: 'failed',
     driverId: 'drv_005',
@@ -271,9 +272,9 @@ export const seedOrders: Order[] = [
   },
   {
     id: 'ord_020',
-    customerName: 'Rawiya Bensaid',
-    address: 'Av Kenitra, Dar Bouazza',
-    lat: 33.5243, lng: -7.7692,
+    customerName: 'Hafida Daoudi',
+    address: '27 Av. Bou Craa, Tarfa',
+    lat: 27.1669, lng: -13.2014,
     items: items(['prd_005', 2], ['prd_004', 1]),
     status: 'failed',
     driverId: 'drv_005',

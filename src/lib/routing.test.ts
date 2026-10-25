@@ -23,16 +23,15 @@ describe('haversineKm', () => {
   })
 
   it('is symmetric', () => {
-    const casablanca = { lat: 33.5731, lng: -7.5898 }
-    const rabat = { lat: 34.0209, lng: -6.8416 }
-    expect(haversineKm(casablanca, rabat)).toBeCloseTo(haversineKm(rabat, casablanca), 9)
+    const pointA = { lat: 0.37, lng: 0.42 }
+    const pointB = { lat: 0.12, lng: -0.9 }
+    expect(haversineKm(pointA, pointB)).toBeCloseTo(haversineKm(pointB, pointA), 9)
   })
 
-  it('measures a known city pair in a sensible range', () => {
-    const casablanca = { lat: 33.5731, lng: -7.5898 }
-    const rabat = { lat: 34.0209, lng: -6.8416 }
-    const km = haversineKm(casablanca, rabat)
-    expect(km).toBeGreaterThan(80) // ~87 km by air
+  it('measures a known distance in a sensible range', () => {
+    // 0.75° of pure latitude: ~83.5 km with the standard earth radius.
+    const km = haversineKm(ORIGIN, { lat: 0.75, lng: 0 })
+    expect(km).toBeGreaterThan(80)
     expect(km).toBeLessThan(95)
   })
 })

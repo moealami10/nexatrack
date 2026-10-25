@@ -8,13 +8,12 @@ import { Modal } from '@/components/ui/Modal'
 import type { ActionLabel } from '@/lib/actionLabel'
 import { translateAction } from '@/lib/actionLabel'
 import { tryCreateOrder } from '@/lib/orders'
-import { DEFAULT_SERVICE_MINUTES, parseHhmm } from '@/lib/routing'
-import { db, newId, useCollection } from '@/lib/store'
+import { haversineKm, DEFAULT_SERVICE_MINUTES, parseHhmm } from '@/lib/routing'
+import { db, newId, useCollection, useSettings } from '@/lib/store'
 import type { Product } from '@/types'
 
-/** Casablanca city center as the default drop-off point. */
-const DEFAULT_LAT = '33.5731'
-const DEFAULT_LNG = '-7.5898'
+/** Beyond this many kilometers from the depot, creation shows a caution. */
+const FAR_FROM_DEPOT_KM = 40
 
 interface Row {
   productId: string
@@ -24,11 +23,13 @@ interface Row {
 export default function NewOrderModal({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation()
   const products = useCollection(db.products)
+  const settings = useSettings()
 
   const [customerName, setCustomerName] = useState('')
   const [address, setAddress] = useState('')
-  const [lat, setLat] = useState(DEFAULT_LAT)
-  const [lng, setLng] = useState(DEFAULT_LNG)
+  /** Depot coordinates as the default drop-off point (from Settings). */
+  const [lat, setLat] = useState(String(settings.depot.lat))
+  const [lng, setLng] = useState(String(settings.depot.lng))
   const [rows, setRows] = useState<Row[]>([
     { productId: products[0]?.id ?? '', qty: '1' },
   ])
@@ -36,6 +37,17 @@ export default function NewOrderModal({ onClose }: { onClose: () => void }) {
   const [windowEnd, setWindowEnd] = useState('')
   const [serviceMinutes, setServiceMinutes] = useState('5')
   const [error, setError] = useState<ActionLabel | null>(null)
+
+  // Non-blocking caution while typing: straight-line distance from the
+  // edited point to the depot (orders have no edit surface — creation is
+  // the only place coordinates are entered by hand).
+  const parsedLat = Number.parseFloat(lat)
+  const parsedLng = Number.parseFloat(lng)
+  const positionValid = Number.isFinite(parsedLat) && Number.isFinite(parsedLng)
+  const distanceKm = positionValid
+    ? haversineKm(settings.depot, { lat: parsedLat, lng: parsedLng })
+    : 0
+  const farFromDepot = positionValid && distanceKm > FAR_FROM_DEPOT_KM
 
   function setRow(index: number, patch: Partial<Row>) {
     setRows((current) =>
@@ -172,6 +184,15 @@ export default function NewOrderModal({ onClose }: { onClose: () => void }) {
             />
           </Field>
         </div>
+
+        {farFromDepot && (
+          <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 ring-1 ring-inset ring-amber-300">
+            {t('orders.farFromDepot', {
+              km: Math.round(distanceKm),
+              city: settings.cityName,
+            })}
+          </p>
+        )}
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Field label={t('orders.fieldWindowStart')}>
