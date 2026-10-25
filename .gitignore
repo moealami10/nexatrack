@@ -26,3 +26,7 @@ dist-ssr
 # Mobile visual QA artifacts
 e2e
 screenshots
+
+# Playwright artifacts
+test-results/
+playwright-report/
