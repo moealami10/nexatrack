@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
+import { MapContainer, Marker, TileLayer, useMapEvents, useMap } from 'react-leaflet'
 import type { FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { MapContainer, Marker, TileLayer, useMapEvents } from 'react-leaflet'
 import * as L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -35,6 +35,15 @@ function DeliveryPlacer({ onPick }: { onPick: (lat: number, lng: number) => void
       onPick(event.latlng.lat, event.latlng.lng)
     },
   })
+  return null
+}
+
+/** Ensures map size is updated when modal opens (fixes invisible map in modals). */
+function MapSizeFixer() {
+  const map = useMap()
+  useEffect(() => {
+    map.invalidateSize()
+  }, [map])
   return null
 }
 
@@ -244,6 +253,7 @@ export default function NewOrderModal({ onClose }: { onClose: () => void }) {
               url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             <DeliveryPlacer onPick={handleMapClick} />
+            <MapSizeFixer />
             {positionValid && (
               <Marker position={[parsedLat, parsedLng]} icon={DELIVERY_ICON} />
             )}
