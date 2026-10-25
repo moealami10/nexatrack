@@ -112,7 +112,7 @@ describe('getDistanceMatrix (OSRM Table API)', () => {
     expect(matrix.durationsMin[1]![0]).toBe(2)
   })
 
-  it('rejects after the 5 s timeout even if fetch never settles', async () => {
+  it('rejects after the 10 s timeout even if fetch never settles', async () => {
     vi.useFakeTimers()
     try {
       vi.stubGlobal(
@@ -121,12 +121,12 @@ describe('getDistanceMatrix (OSRM Table API)', () => {
       )
       const promise = getDistanceMatrix(pointsAt(9))
       const assertion = expect(promise).rejects.toThrow('timed out')
-      await vi.advanceTimersByTimeAsync(5000)
+      await vi.advanceTimersByTimeAsync(11000) // 10s timeout + buffer
       await assertion
     } finally {
       vi.useRealTimers()
     }
-  })
+  }, 15000) // Increase test timeout to allow 10s+ fake timer advancement
 })
 
 describe('getRouteGeometry (OSRM Route API)', () => {

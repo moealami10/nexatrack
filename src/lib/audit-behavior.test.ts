@@ -1,9 +1,10 @@
-import { beforeEach, describe, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { clearAllData, db } from './store'
-import { tryCreateOrder, markOrderFailed, reactivateOrder, advanceOrder } from './orders'
+import { tryCreateOrder, markOrderFailed, advanceOrder } from './orders'
 import { installDemoData } from './demoData'
+import type { OrderStatus } from '@/types'
 
-function mkOrder(overrides: any = {}) {
+function mkOrder(overrides: Record<string, any> = {}) {
   return {
     id: 'ord_t',
     customerName: 'Test',
@@ -11,7 +12,7 @@ function mkOrder(overrides: any = {}) {
     lat: 27.15,
     lng: -13.20,
     items: [{ productId: 'prd_001', qty: 1 }],
-    status: 'pending',
+    status: 'pending' as OrderStatus,
     createdAt: new Date().toISOString(),
     ...overrides,
   }
@@ -20,12 +21,10 @@ function mkOrder(overrides: any = {}) {
 beforeEach(() => clearAllData())
 
 describe('audit behavior', () => {
-  it('assigned order fail clears driverId? check', () => {
+  it('markOrderFailed on assigned order: driver becomes available, order status becomes failed (driverId stays on order)', () => {
     installDemoData()
-    // create a product? use existing seed products
     const products = db.products.all()
     const pid = products[0].id
-    // ensure stock
     const order = mkOrder({ items: [{ productId: pid, qty: 1 }], status: 'pending' })
     tryCreateOrder(order)
     const o = db.orders.all().find((x) => x.id === 'ord_t')!
@@ -33,15 +32,19 @@ describe('audit behavior', () => {
     advanceOrder(o) // pending -> assigned
     const assigned = db.orders.all().find((x) => x.id === 'ord_t')!
     const drv = db.drivers.all().find((d) => d.id === assigned.driverId)!
+    expect(assigned.driverId).toBeDefined()
+    expect(drv.status).toBe('available')
+
     markOrderFailed(assigned)
     const after = db.orders.all().find((x) => x.id === 'ord_t')!
     const drvAfter = db.drivers.all().find((d) => d.id === assigned.driverId)!
-    reactivateOrder(after)
-    const re = db.orders.all().find((x) => x.id === 'ord_t')!
-    throw new Error(`assigned=${assigned.driverId} drvBefore=${drv.status} afterFail=${after.status} driverId=${after.driverId} drvAfter=${drvAfter?.status ?? 'n/a'} reactivated=${re.status} reDriverId=${re.driverId}`)
+
+    expect(after.status).toBe('failed')
+    expect(after.driverId).toBe(assigned.driverId) // driverId stays on the order
+    expect(drvAfter?.status).toBe('available') // but driver becomes available
   })
 
-  it('delivered order can be marked failed?', () => {
+  it('markOrderFailed on delivered order is refused (no restock, no event)', () => {
     installDemoData()
     const products = db.products.all()
     const pid = products[0].id
@@ -52,9 +55,14 @@ describe('audit behavior', () => {
     advanceOrder(db.orders.all().find((x) => x.id === 'ord_t')!) // in_transit
     advanceOrder(db.orders.all().find((x) => x.id === 'ord_t')!) // delivered
     const del = db.orders.all().find((x) => x.id === 'ord_t')!
-    console.log('delivered', del.status)
+    expect(del.status).toBe('delivered')
+
+    const beforeStatus = del.status
     markOrderFailed(del)
     const after = db.orders.all().find((x) => x.id === 'ord_t')!
-    console.log('after markOrderFailed on delivered:', after.status)
+
+    // Should remain delivered - markOrderFailed on delivered is refused
+    expect(after.status).toBe('delivered')
+    expect(after.status).toBe(beforeStatus)
   })
 })
