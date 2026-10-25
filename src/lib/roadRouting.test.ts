@@ -14,8 +14,8 @@ const BASE = 'https://router.project-osrm.org'
 function pointsAt(index: number) {
   return [
     { lat: 27.1536 + index * 10, lng: -13.2033 },
-    { lat: 27.16 + index * 10, lng: -7.57 },
-    { lat: 33.6 + index * 10, lng: -7.55 },
+    { lat: 27.16 + index * 10, lng: -13.19 },
+    { lat: 27.17 + index * 10, lng: -13.18 },
   ]
 }
 
@@ -72,7 +72,7 @@ describe('getDistanceMatrix (OSRM Table API)', () => {
     // URL wants lng before lat, semicolon-joined, with both annotations.
     expect(stub.urls()[0]).toBe(
       `${BASE}/table/v1/driving/` +
-        '-13.203300,27.153600;-7.570000,27.160000;-7.550000,33.600000' +
+        '-13.203300,27.153600;-13.190000,27.160000;-13.180000,27.170000' +
         '?annotations=distance,duration',
     )
   })
@@ -138,9 +138,9 @@ describe('getRouteGeometry (OSRM Route API)', () => {
           geometry: {
             type: 'LineString',
             coordinates: [
-              [-13.2033, 43.5731],
-              [-7.55, 43.6],
-              [-7.5, 43.61],
+              [-13.2033, 67.1536],
+              [-13.19, 67.16],
+              [-13.18, 67.17],
             ],
           },
         },
@@ -149,13 +149,13 @@ describe('getRouteGeometry (OSRM Route API)', () => {
     const path = await getRouteGeometry(pointsAt(4))
 
     expect(path).toEqual([
-      [43.5731, -13.2033],
-      [43.6, -7.55],
-      [43.61, -7.5],
+      [67.1536, -13.2033],
+      [67.16, -13.19],
+      [67.17, -13.18],
     ])
     expect(stub.urls()[0]).toBe(
       `${BASE}/route/v1/driving/` +
-        '-13.203300,67.153600;-7.570000,67.160000;-7.550000,73.600000' +
+        '-13.203300,67.153600;-13.190000,67.160000;-13.180000,67.170000' +
         '?overview=full&geometries=geojson',
     )
   })
@@ -190,8 +190,8 @@ describe('caching', () => {
           geometry: {
             type: 'LineString',
             coordinates: [
-              [-13.2033, 53.5731],
-              [-7.57, 53.58],
+              [-13.2033, 227.1536],
+              [-13.19, 227.16],
             ],
           },
         },

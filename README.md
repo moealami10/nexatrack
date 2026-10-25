@@ -31,7 +31,7 @@ drivers, or route plans. Every page shows an empty state with the suggested
 next step (the Dashboard adds a getting-started checklist that ticks itself
 off as you go). When you want to see the app in action, use
 **📥 Load demo data** in the sidebar: it fills the app with a demo dataset
-(12 products, 12 inventory items, 5 drivers, 20 orders around Laâyoune)
+(15 products, 15 inventory items, 5 drivers, 20 orders around Laâyoune)
 in one undoable step. Loading demo data while the app already has content
 asks for confirmation first, since it replaces everything. Everything you
 change is persisted to `localStorage` immediately — all collection keys are

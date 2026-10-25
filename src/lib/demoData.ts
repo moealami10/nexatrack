@@ -1,3 +1,4 @@
+import i18n from '@/i18n'
 import { seedDrivers, seedInventory, seedOrders, seedProducts } from './seed'
 import { db, runTransaction } from './store'
 
@@ -19,9 +20,9 @@ export function installDemoData(): void {
       },
     }),
     () => {
-      db.products.save(seedProducts)
+      db.products.save(seedProducts(i18n.language))
       db.inventory.save(seedInventory)
-      db.orders.save(seedOrders)
+      db.orders.save(seedOrders())
       db.drivers.save(seedDrivers)
       db.routePlans.save([])
     },
