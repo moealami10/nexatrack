@@ -14,6 +14,7 @@
     "unknownItem": "Unknown item",
     "unknownProduct": "Unknown product",
     "language": "Language",
+    "actionsMenu": "Actions",
     "switchToEnglish": "Switch to English",
     "switchToFrench": "Passer en français",
     "loadDemoData": "Load demo data",
@@ -34,7 +35,8 @@
     "inventory": "Inventory",
     "orders": "Orders",
     "drivers": "Drivers",
-    "routes": "Routes"
+    "routes": "Routes",
+    "more": "More"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -88,7 +90,7 @@
   },
   "inventory": {
     "title": "Inventory",
-    "description": "Stock levels per warehouse item. Click a quantity to edit it.",
+    "description": "Stock levels per warehouse item. Edit a quantity inline.",
     "emptyNoProducts": "Add a product first — stock rows appear when you create products.",
     "goToProducts": "Go to Products →",
     "emptyNoRows": "No inventory rows. Adding products creates stock entries automatically.",
@@ -99,6 +101,8 @@
     "columnActions": "Actions",
     "quantityFor": "Quantity for {{name}}",
     "restock": "Restock +50",
+    "decrease": "Decrease quantity",
+    "increase": "Increase quantity",
     "noProductEntry": "No product entry",
     "outOfStock": "Out of stock",
     "belowThreshold": "Below threshold",
@@ -214,6 +218,8 @@
     "optimize": "⚡ Optimize route",
     "optimizing": "⏳ Optimizing…",
     "startRoute": "▶ Start route",
+    "showStops": "Show stops",
+    "hideStops": "Hide stops",
     "noActiveOrders": "No active orders for this driver yet.",
     "distanceLabel": "Distance",
     "timeLabel": "Est. time",

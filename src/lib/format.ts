@@ -56,6 +56,14 @@ export function formatMinutes(minutes: number): string {
   return `${hours} h ${String(rest).padStart(2, '0')} min`
 }
 
+/**
+ * Stock quantity from a raw input string: whole number, never below zero.
+ * Used by the inventory input and by the mobile +/- stepper.
+ */
+export function clampQuantity(raw: string): number {
+  return Math.max(0, Math.floor(Number(raw) || 0))
+}
+
 /** e.g. "Oct 24" / "24 oct." */
 export function formatDate(isoDate: string): string {
   return cachedDateTime({ month: 'short', day: 'numeric' }).format(new Date(isoDate))

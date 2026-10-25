@@ -14,6 +14,7 @@
     "unknownItem": "Article inconnu",
     "unknownProduct": "Produit inconnu",
     "language": "Langue",
+    "actionsMenu": "Actions",
     "switchToEnglish": "Passer en anglais",
     "switchToFrench": "Passer en français",
     "loadDemoData": "Charger les données de démonstration",
@@ -34,7 +35,8 @@
     "inventory": "Stock",
     "orders": "Commandes",
     "drivers": "Livreurs",
-    "routes": "Tournées"
+    "routes": "Tournées",
+    "more": "Plus"
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -88,7 +90,7 @@
   },
   "inventory": {
     "title": "Stock",
-    "description": "Niveaux de stock par article. Cliquez sur une quantité pour la modifier.",
+    "description": "Niveaux de stock par article. Modifiez une quantité directement.",
     "emptyNoProducts": "Ajoutez d'abord un produit — les lignes de stock apparaissent à la création des produits.",
     "goToProducts": "Aller aux Produits →",
     "emptyNoRows": "Aucune ligne de stock. L'ajout de produits crée automatiquement les entrées de stock.",
@@ -99,6 +101,8 @@
     "columnActions": "Actions",
     "quantityFor": "Quantité pour {{name}}",
     "restock": "Réapprovisionner +50",
+    "decrease": "Diminuer la quantité",
+    "increase": "Augmenter la quantité",
     "noProductEntry": "Pas de fiche produit",
     "outOfStock": "Rupture de stock",
     "belowThreshold": "Sous le seuil",
@@ -214,6 +218,8 @@
     "optimize": "⚡ Optimiser la tournée",
     "optimizing": "⏳ Optimisation…",
     "startRoute": "▶ Démarrer la tournée",
+    "showStops": "Afficher les arrêts",
+    "hideStops": "Masquer les arrêts",
     "noActiveOrders": "Aucune commande active pour ce livreur pour le moment.",
     "distanceLabel": "Distance",
     "timeLabel": "Durée estimée",

@@ -1,5 +1,51 @@
 @import "tailwindcss";
 
+/* --- Mobile helpers ------------------------------------------------------ */
+
+/* Hide scrollbars (filter chip rows, tab bars). */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Slide-up sheet used by modal/drawer on mobile and bottom panels. */
+@keyframes sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-sheet-in {
+  animation: sheet-in 220ms ease-out;
+}
+
+/* Safe-area padding helpers for fixed chrome near notches / home bar. */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* The page never scrolls sideways: widest children get clipped instead. */
+html,
+body {
+  overflow-x: clip;
+}
+
+/* Larger invisible Leaflet hit pin (mobile 44px+ touch targets). The
+   wrapper is sized by the iconSize; the visible pin stays 26px centered. */
+.map-pin-lg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 @keyframes drawer-in {
   from {
     transform: translateX(100%);

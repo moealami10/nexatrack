@@ -15,7 +15,7 @@ export function ToastStack() {
     <div
       key={toast.id}
       role="status"
-      className="animate-toast-in fixed bottom-4 right-4 z-[70] flex max-w-[calc(100vw-2rem)] items-center gap-2 rounded-xl bg-slate-900 py-3 pl-4 pr-2 text-white shadow-xl"
+      className="animate-toast-in fixed right-4 z-[70] flex max-w-[calc(100vw-2rem)] items-center gap-2 rounded-xl bg-slate-900 py-3 pl-4 pr-2 text-white shadow-xl bottom-[calc(env(safe-area-inset-bottom)+5.75rem)] md:bottom-4"
     >
       <p className="text-sm leading-5">{translateAction(toast.label)}</p>
       <div className="ml-1 flex shrink-0 items-center">

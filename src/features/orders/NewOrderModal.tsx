@@ -111,44 +111,69 @@ export default function NewOrderModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <Modal title={t('orders.formTitle')} onClose={onClose}>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <Modal
+      title={t('orders.formTitle')}
+      onClose={onClose}
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>
+            {t('common.cancel')}
+          </Button>
+          <Button type="submit" form="order-form" disabled={products.length === 0}>
+            {t('orders.createOrder')}
+          </Button>
+        </>
+      }
+    >
+      <form id="order-form" onSubmit={handleSubmit} className="flex flex-col gap-4">
         {error && (
           <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-inset ring-red-300">
             {translateAction(error)}
           </p>
         )}
 
-        <div className="grid grid-cols-2 gap-4">
-          <Field label={t('orders.fieldName')}>
-            <input
-              value={customerName}
-              onChange={(event) => setCustomerName(event.target.value)}
-              placeholder={t('orders.fieldNamePlaceholder')}
-              className={inputClasses}
-              autoFocus
-            />
-          </Field>
-          <Field label={t('orders.fieldAddress')}>
-            <input
-              value={address}
-              onChange={(event) => setAddress(event.target.value)}
-              placeholder={t('orders.fieldAddressPlaceholder')}
-              className={inputClasses}
-            />
-          </Field>
-        </div>
+        <Field label={t('orders.fieldName')}>
+          <input
+            value={customerName}
+            onChange={(event) => setCustomerName(event.target.value)}
+            placeholder={t('orders.fieldNamePlaceholder')}
+            className={inputClasses}
+            autoComplete="off"
+            autoFocus
+          />
+        </Field>
+        <Field label={t('orders.fieldAddress')}>
+          <input
+            value={address}
+            onChange={(event) => setAddress(event.target.value)}
+            placeholder={t('orders.fieldAddressPlaceholder')}
+            className={inputClasses}
+            autoComplete="off"
+          />
+        </Field>
 
         <div className="grid grid-cols-2 gap-4">
           <Field label={t('orders.fieldLat')}>
-            <input value={lat} onChange={(event) => setLat(event.target.value)} className={inputClasses} />
+            <input
+              value={lat}
+              onChange={(event) => setLat(event.target.value)}
+              inputMode="decimal"
+              autoComplete="off"
+              className={inputClasses}
+            />
           </Field>
           <Field label={t('orders.fieldLng')}>
-            <input value={lng} onChange={(event) => setLng(event.target.value)} className={inputClasses} />
+            <input
+              value={lng}
+              onChange={(event) => setLng(event.target.value)}
+              inputMode="decimal"
+              autoComplete="off"
+              className={inputClasses}
+            />
           </Field>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Field label={t('orders.fieldWindowStart')}>
             <input
               type="time"
@@ -170,6 +195,7 @@ export default function NewOrderModal({ onClose }: { onClose: () => void }) {
               value={serviceMinutes}
               onChange={(event) => setServiceMinutes(event.target.value)}
               inputMode="numeric"
+              autoComplete="off"
               className={inputClasses}
             />
           </Field>
@@ -198,14 +224,15 @@ export default function NewOrderModal({ onClose }: { onClose: () => void }) {
                   value={row.qty}
                   onChange={(event) => setRow(index, { qty: event.target.value })}
                   inputMode="numeric"
+                  autoComplete="off"
                   aria-label={t('orders.quantityAria')}
-                  className="w-20 rounded-lg border border-slate-300 px-2 py-2 text-sm"
+                  className="w-16 shrink-0 rounded-lg border border-slate-300 px-2 py-1.5 text-base sm:w-20 sm:text-sm"
                 />
                 <button
                   type="button"
                   onClick={() => removeRow(index)}
                   aria-label={t('orders.removeItemAria')}
-                  className="rounded-lg p-2 text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40 md:h-9 md:w-9"
                   disabled={rows.length === 1}
                 >
                   ✕
@@ -216,19 +243,10 @@ export default function NewOrderModal({ onClose }: { onClose: () => void }) {
           <button
             type="button"
             onClick={addRow}
-            className="mt-3 text-sm font-medium text-slate-600 transition hover:text-slate-900"
+            className="mt-3 inline-flex min-h-[44px] items-center text-sm font-medium text-slate-600 transition hover:text-slate-900 md:min-h-0"
           >
             {t('orders.addAnotherItem')}
           </button>
-        </div>
-
-        <div className="flex justify-end gap-2">
-          <Button variant="secondary" onClick={onClose}>
-            {t('common.cancel')}
-          </Button>
-          <Button type="submit" disabled={products.length === 0}>
-            {t('orders.createOrder')}
-          </Button>
         </div>
       </form>
     </Modal>

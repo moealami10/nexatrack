@@ -76,14 +76,28 @@ export default function ProductFormModal({
   }
 
   return (
-    <Modal title={product ? t('products.formTitleEdit') : t('products.formTitleAdd')} onClose={onClose}>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <Modal
+      title={product ? t('products.formTitleEdit') : t('products.formTitleAdd')}
+      onClose={onClose}
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>
+            {t('common.cancel')}
+          </Button>
+          <Button type="submit" form="product-form">
+            {product ? t('common.saveChanges') : t('products.addProduct')}
+          </Button>
+        </>
+      }
+    >
+      <form id="product-form" onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Field label={t('products.fieldName')}>
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}
             placeholder={t('products.placeholderName')}
             className={inputClasses}
+            autoComplete="off"
             autoFocus
           />
         </Field>
@@ -93,14 +107,16 @@ export default function ProductFormModal({
             onChange={(event) => setSku(event.target.value)}
             placeholder={t('products.placeholderSku')}
             className={inputClasses}
+            autoComplete="off"
           />
         </Field>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label={t('products.fieldPrice')}>
             <input
               value={price}
               onChange={(event) => setPrice(event.target.value)}
               inputMode="decimal"
+              autoComplete="off"
               placeholder={t('products.placeholderPrice')}
               className={inputClasses}
             />
@@ -118,14 +134,6 @@ export default function ProductFormModal({
               ))}
             </select>
           </Field>
-        </div>
-        <div className="flex justify-end gap-2">
-          <Button variant="secondary" onClick={onClose}>
-            {t('common.cancel')}
-          </Button>
-          <Button type="submit">
-            {product ? t('common.saveChanges') : t('products.addProduct')}
-          </Button>
         </div>
       </form>
     </Modal>

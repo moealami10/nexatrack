@@ -73,13 +73,52 @@ export default function OrderDetailDrawer({
     if (!result.ok) setError(result.error ?? { key: 'errors.cannotReactivate' })
   }
 
+  const actions: { label: string; variant: 'primary' | 'danger' | 'secondary'; onClick: () => void }[] = []
+  if (nextLabel) {
+    actions.push({ label: nextLabel, variant: 'primary', onClick: () => advanceOrder(order) })
+  }
+  if (canFail.includes(order.status)) {
+    actions.push({ label: t('orders.markFailed'), variant: 'danger', onClick: handleFail })
+    actions.push({ label: t('orders.cancelOrder'), variant: 'secondary', onClick: handleCancel })
+  }
+  if (isTerminal) {
+    actions.push({ label: t('orders.reactivateOrder'), variant: 'primary', onClick: handleReactivate })
+  }
+
+  const errorBox = error && (
+    <div
+      role="alert"
+      className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-inset ring-red-600/20"
+    >
+      {translateAction(error)}
+    </div>
+  )
+
   return (
-    <Drawer title={t('orders.columnOrder') + ' ' + order.id} onClose={onClose}>
+    <Drawer
+      title={t('orders.columnOrder') + ' ' + order.id}
+      onClose={onClose}
+      footer={
+        actions.length > 0 ? (
+          <div className="flex w-full flex-wrap gap-2">
+            {actions.map((action) => (
+              <Button
+                key={action.label}
+                variant={action.variant}
+                onClick={action.onClick}
+                className="min-w-0 flex-1 sm:flex-none"
+              >
+                {action.label}
+              </Button>
+            ))}
+          </div>
+        ) : undefined
+      }
+    >
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-slate-900">{order.customerName}</h3>
         <Badge>{orderStatusLabel(order.status)}</Badge>
-      </div>
-      <p className="mt-1 text-sm text-slate-500">{order.address}</p>
+      </div>      <p className="mt-1 text-sm text-slate-500">{order.address}</p>
       <p className="text-xs text-slate-400">
         {order.lat.toFixed(4)}, {order.lng.toFixed(4)}
       </p>
@@ -112,7 +151,7 @@ export default function OrderDetailDrawer({
                   : { key: 'actions.unassignedOrder', params: { name: order.customerName } },
               )
             }}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-base sm:text-sm"
           >
             <option value="">{t('orders.driverUnassigned')}</option>
             {candidates.map((driver) => (
@@ -164,31 +203,7 @@ export default function OrderDetailDrawer({
         </ul>
       </div>
 
-      {/* Actions */}
-      {(nextLabel || canFail.includes(order.status) || isTerminal) && (
-        <div className="mt-6 flex gap-2">
-          {nextLabel && <Button onClick={() => advanceOrder(order)}>{nextLabel}</Button>}
-          {canFail.includes(order.status) && (
-            <Button variant="danger" onClick={handleFail}>
-              {t('orders.markFailed')}
-            </Button>
-          )}
-          {canFail.includes(order.status) && (
-            <Button variant="secondary" onClick={handleCancel}>
-              {t('orders.cancelOrder')}
-            </Button>
-          )}
-          {isTerminal && <Button onClick={handleReactivate}>{t('orders.reactivateOrder')}</Button>}
-        </div>
-      )}
-      {error && (
-        <div
-          role="alert"
-          className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-inset ring-red-600/20"
-        >
-          {translateAction(error)}
-        </div>
-      )}
+      {errorBox}
       {isTerminal && (
         <p className="mt-6 text-sm text-slate-400">
           {order.restocked

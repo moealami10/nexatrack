@@ -17,7 +17,7 @@ export function LanguageSwitch() {
     <div
       role="group"
       aria-label={t('common.language')}
-      className="flex h-9 items-center overflow-hidden rounded-md border border-slate-300 bg-white text-sm font-medium"
+      className="flex h-11 items-center overflow-hidden rounded-md border border-slate-300 bg-white text-sm font-medium md:h-9"
     >
       {LANGUAGES.map((option, index) => {
         const isActive = active === option.code

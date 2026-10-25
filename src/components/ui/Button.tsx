@@ -13,6 +13,7 @@ export function Button({
   disabled = false,
   className = '',
   title,
+  form,
   children,
 }: {
   variant?: ButtonVariant
@@ -22,6 +23,8 @@ export function Button({
   className?: string
   /** Optional hover tooltip, e.g. why the action is disabled. */
   title?: string
+  /** Submit a form by id when the button lives outside it (sticky footer). */
+  form?: string
   children: React.ReactNode
 }) {
   return (
@@ -30,7 +33,8 @@ export function Button({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`rounded-lg px-3 py-1.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${VARIANT_CLASSES[variant]} ${className}`}
+      form={form}
+      className={`inline-flex min-h-[44px] items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 md:min-h-0 ${VARIANT_CLASSES[variant]} ${className}`}
     >
       {children}
     </button>

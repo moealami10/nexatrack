@@ -11,6 +11,7 @@ import { formatDate, formatCurrency } from '@/lib/format'
 import { buildProductIndex, getOrderTotal, summarizeOrderItems } from '@/lib/orders'
 import { ORDER_STATUS_TONE, orderStatusLabel } from '@/lib/status'
 import { db, useCollection } from '@/lib/store'
+import { useIsMobile } from '@/lib/useIsMobile'
 import type { OrderStatus } from '@/types'
 
 import NewOrderModal from './NewOrderModal'
@@ -30,6 +31,7 @@ export default function OrdersPage() {
   const [search, setSearch] = useState('')
   const [detailId, setDetailId] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
+  const isMobile = useIsMobile()
 
   const productIndex = buildProductIndex(products)
   const driverName = (driverId?: string) =>
@@ -78,7 +80,7 @@ export default function OrdersPage() {
         }
       />
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      <div className="no-scrollbar -mx-3 mb-4 flex gap-2 overflow-x-auto px-3 py-1 md:mx-0 md:flex-wrap md:overflow-visible md:px-0 md:py-0">
         {chips.map((chip) => {
           const active = filter === chip.key
           return (
@@ -86,7 +88,7 @@ export default function OrdersPage() {
               key={chip.key}
               type="button"
               onClick={() => setFilter(chip.key)}
-              className={`rounded-full px-3 py-1.5 text-sm font-medium ring-1 ring-inset transition ${
+              className={`inline-flex min-h-[44px] shrink-0 items-center whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium ring-1 ring-inset transition md:min-h-0 ${
                 active
                   ? 'bg-slate-900 text-white ring-slate-900'
                   : 'bg-white text-slate-600 ring-slate-300 hover:bg-slate-50'
@@ -139,6 +141,41 @@ export default function OrdersPage() {
         })()
       ) : visibleOrders.length === 0 ? (
         <EmptyState icon="🔍" message={t('orders.noMatchFilter')} />
+      ) : isMobile ? (
+        /* Phone: tappable cards open the detail sheet. */
+        <ul className="flex flex-col gap-3">
+          {visibleOrders.map((order) => (
+            <li
+              key={order.id}
+              onClick={() => setDetailId(order.id)}
+              className="cursor-pointer rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:bg-slate-50"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <span className="font-mono text-xs text-slate-500">{order.id}</span>
+                <Badge tone={ORDER_STATUS_TONE[order.status]}>
+                  {orderStatusLabel(order.status)}
+                </Badge>
+              </div>
+              <div className="mt-1.5 flex min-w-0 items-baseline justify-between gap-2">
+                <h2 className="truncate font-medium text-slate-900">{order.customerName}</h2>
+                <span className="shrink-0 text-sm font-semibold text-slate-900">
+                  {formatCurrency(getOrderTotal(order, productIndex))}
+                </span>
+              </div>
+              <p className="mt-0.5 truncate text-sm text-slate-500">{order.address}</p>
+              <div className="mt-2 flex items-center justify-between gap-2 border-t border-slate-100 pt-2 text-xs text-slate-400">
+                <span className="truncate">
+                  {summarizeOrderItems(order, productIndex, t('common.unknownItem'))}
+                </span>
+                <span className="flex shrink-0 items-center gap-2">
+                  <span>{driverName(order.driverId)}</span>
+                  <span>{formatDate(order.createdAt)}</span>
+                  <span className="font-medium text-slate-600">{t('orders.view')}</span>
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
       ) : (
         <Table
           columns={[

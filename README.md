@@ -100,6 +100,31 @@ No confirm dialogs: destructive actions (e.g. deleting a product, which
 also removes its inventory row) act immediately — the toast's Undo button
 is the safety net.
 
+## Mobile (phones < 768px)
+
+Tables become cards, modals become full-screen bottom sheets; the desktop
+layout (≥768px) is untouched.
+
+- **Shell**: fixed bottom tab bar (Dashboard, Orders, Drivers, Routes +
+  a "More" sheet holding Products, Inventory, the language switch and the
+  data actions); icon-only undo/redo; safe-area insets respected at the
+  notched top and bottom (`viewport-fit=cover`).
+- **Touch**: every tappable element is ≥ 44×44px; form inputs are 16px on
+  touch devices (prevents iOS focus zoom) with `inputMode`/`type`
+  hints (`tel`, `numeric`, `decimal`).
+- **Bottom sheets**: `Modal`/`Drawer` render full-screen on phones with a
+  sticky header and a sticky footer for the primary action; the page
+  behind them doesn't scroll (`useOverlayLock`).
+- **Inventory**: inline editing becomes a − [qty] + stepper (mobile only).
+- **Routes**: ~45% screen-height map on top; the driver picker, shift
+  time and Optimize/Start live in a sticky strip below it; the stop list
+  is collapsible. Tapping a stop centers the map (`flyTo`), tapping a
+  marker scrolls its row into view; flags get a 44px hit area on touch.
+- **Visual QA**: `npm run build`, then `npx vitest run scripts/dumpSeed.test.ts`
+  (writes `e2e/seed.json`) and `node scripts/mobile-shots.mjs` /
+  `node scripts/fr-sweep.mjs` — screenshot every page at 360/390/768px
+  (EN + FR) with Playwright and flag any horizontal overflow.
+
 ## Pages
 
 | Page | What it does |

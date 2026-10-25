@@ -27,6 +27,7 @@ import {
 import { getDistanceMatrix, getRouteGeometry } from '@/lib/roadRouting'
 import { db, runTransaction, useCollection } from '@/lib/store'
 import type { TranslatableLabel } from '@/lib/store'
+import { useIsMobile } from '@/lib/useIsMobile'
 import { driverStatusLabel, DRIVER_STATUS_TONE } from '@/lib/status'
 import type { Order } from '@/types'
 
@@ -57,6 +58,11 @@ export default function RoutesPage() {
   const [optimizing, setOptimizing] = useState(false)
   /** Driver shift start as "HH:MM" (default 08:00). */
   const [shiftStart, setShiftStart] = useState('08:00')
+  /** Stop centered on the map (mobile: set from stop-list taps). */
+  const [focusStopId, setFocusStopId] = useState<string | null>(null)
+  /** Collapsible stop panel state (mobile only). */
+  const [stopsOpen, setStopsOpen] = useState(false)
+  const isMobile = useIsMobile()
   /** True when OSRM is unreachable and straight-line estimates are shown. */
   const [approximate, setApproximate] = useState(false)
   /**
@@ -90,6 +96,14 @@ export default function RoutesPage() {
 
   function handleDriverChange(next: string) {
     setDriverId(next)
+  }
+
+  /** Marker tap → scroll the matching stop row into view (marker → list). */
+  function handleMarkerClick(stopId: string) {
+    if (!isMobile) return
+    document
+      .getElementById(`stop-row-${stopId}`)
+      ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
   }
 
   async function handleOptimize() {
@@ -261,27 +275,59 @@ export default function RoutesPage() {
   const savedPercent =
     isOptimized && savedPlan && baselineKm > 0 ? (savedKm / baselineKm) * 100 : 0
 
+  const driverControls = (
+    <>
+      <label className="flex items-center gap-1.5 text-sm text-slate-500">
+        {t('routes.shiftLabel')}
+        <input
+          type="time"
+          value={shiftStart}
+          onChange={(event) => setShiftStart(event.target.value)}
+          className={`${inputClasses} w-28 px-2 py-1.5`}
+          aria-label={t('routes.shiftStartAria')}
+        />
+      </label>
+      <select
+        value={driverId}
+        onChange={(event) => handleDriverChange(event.target.value)}
+        className={`${inputClasses} w-full sm:w-64`}
+      >
+        <option value="">{t('routes.selectDriver')}</option>
+        {drivers.map((driver) => {
+          const count = orders.filter(
+            (order) => order.driverId === driver.id && isActiveAssignment(order),
+          ).length
+          return (
+            <option key={driver.id} value={driver.id}>
+              {driver.name} ({t('orders.count', { count })})
+            </option>
+          )
+        })}
+      </select>
+    </>
+  )
+
   return (
     <>
       <PageHeader
         title={t('routes.title')}
         description={t('routes.description')}
         actions={
-          <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
-            <label className="flex items-center gap-1.5 text-sm text-slate-500">
-              {t('routes.shiftLabel')}
-              <input
-                type="time"
-                value={shiftStart}
-                onChange={(event) => setShiftStart(event.target.value)}
-                className={`${inputClasses} w-28 px-2 py-1.5`}
-                aria-label={t('routes.shiftStartAria')}
-              />
-            </label>
+          /* On phones the picker/shift/Optimize live in the sticky strip
+             below so they stay reachable while the list is scrolled. */
+          isMobile ? undefined : <div className="flex w-full items-center justify-end gap-2 sm:w-auto">{driverControls}</div>
+        }
+      />
+
+      {/* Phone: sticky driver picker + route actions (always reachable) */}
+      {isMobile && (
+        <div className="sticky top-14 z-20 -mx-3 mb-3 border-b border-slate-200 bg-white/95 px-3 py-2 backdrop-blur md:hidden">
+          <div className="flex items-center gap-2">
             <select
               value={driverId}
               onChange={(event) => handleDriverChange(event.target.value)}
-              className={`${inputClasses} w-full sm:w-64`}
+              aria-label={t('routes.selectDriver')}
+              className="min-h-[44px] min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 text-base sm:text-sm"
             >
               <option value="">{t('routes.selectDriver')}</option>
               {drivers.map((driver) => {
@@ -290,22 +336,48 @@ export default function RoutesPage() {
                 ).length
                 return (
                   <option key={driver.id} value={driver.id}>
-                    {driver.name} ({t('orders.count', { count })})
+                    {driver.name} ({count})
                   </option>
                 )
               })}
             </select>
+            <input
+              type="time"
+              value={shiftStart}
+              onChange={(event) => setShiftStart(event.target.value)}
+              aria-label={t('routes.shiftStartAria')}
+              className="w-28 shrink-0 rounded-lg border border-slate-300 px-2 py-1.5 text-base sm:text-sm"
+            />
           </div>
-        }
-      />
+          <div className="mt-2 flex gap-2">
+            <Button
+              className="min-w-0 flex-1"
+              onClick={handleOptimize}
+              disabled={!driver || driverOrders.length === 0 || optimizing}
+            >
+              {optimizing ? t('routes.optimizing') : t('routes.optimize')}
+            </Button>
+            <Button
+              className="min-w-0 flex-1"
+              onClick={() => driver && startDriverRoute(driver.id)}
+              disabled={!driver || !driverOrders.some((order) => order.status === 'assigned')}
+            >
+              {t('routes.startRoute')}
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="h-[460px] overflow-hidden rounded-xl border border-slate-200 shadow-sm">
+        <div className="h-[45dvh] overflow-hidden rounded-xl border border-slate-200 shadow-sm md:h-[460px]">
           <RouteMap
             depot={DEPOT}
             stops={displayedStops}
             beforeStops={isOptimized ? driverOrders.map(stopOf) : null}
             roadPath={roadPath}
+            focusStopId={focusStopId}
+            largeHit={isMobile}
+            onStopClick={handleMarkerClick}
           />
         </div>
 
@@ -326,21 +398,25 @@ export default function RoutesPage() {
                 </p>
               )}
 
-              <Button
-                className="mt-3 w-full"
-                onClick={handleOptimize}
-                disabled={driverOrders.length === 0 || optimizing}
-              >
-                {optimizing ? t('routes.optimizing') : t('routes.optimize')}
-              </Button>
+              {!isMobile && (
+                <>
+                  <Button
+                    className="mt-3 w-full"
+                    onClick={handleOptimize}
+                    disabled={driverOrders.length === 0 || optimizing}
+                  >
+                    {optimizing ? t('routes.optimizing') : t('routes.optimize')}
+                  </Button>
 
-              <Button
-                className="mt-2 w-full"
-                onClick={() => startDriverRoute(driver.id)}
-                disabled={!driverOrders.some((order) => order.status === 'assigned')}
-              >
-                {t('routes.startRoute')}
-              </Button>
+                  <Button
+                    className="mt-2 w-full"
+                    onClick={() => startDriverRoute(driver.id)}
+                    disabled={!driverOrders.some((order) => order.status === 'assigned')}
+                  >
+                    {t('routes.startRoute')}
+                  </Button>
+                </>
+              )}
 
               {driverOrders.length === 0 ? (
                 <p className="mt-3 text-sm text-slate-500">
@@ -426,96 +502,127 @@ export default function RoutesPage() {
 
           {driver && driverOrders.length > 0 && (
             <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
-                {t('routes.stopsTitle')}{' '}
-                {isOptimized && <span className="font-normal normal-case">{t('routes.optimizedSuffix')}</span>}
-              </h3>
-              <ol className="space-y-2">
-                <li className="flex items-center gap-2 text-sm">
-                  <span className="map-pin-wrapper flex">
-                    <span className="map-pin map-pin-depot" style={{ height: 22, width: 22, fontSize: 11 }}>
-                      🚚
-                    </span>
-                  </span>
-                  <span className="text-slate-500">{t('routes.depotRowLabel')}</span>
-                </li>
-                {displayedStops.map((stop, index) => {
-                  const order = orders.find((candidate) => candidate.id === stop.id)
-                  const inTransit = order?.status === 'in_transit'
-                  const entry = schedule?.entries.find(
-                    (candidate) => candidate.stopId === stop.id,
-                  )
-                  const late = (entry?.lateMinutes ?? 0) > 0
-                  return (
-                    <li key={stop.id} className="flex items-center gap-2 text-sm">
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-sky-600 text-[11px] font-bold text-white">
-                        {index + 1}
-                      </span>
-                      <span className="min-w-0">
-                        <span className="font-medium text-slate-800">
-                          {order?.customerName ?? t('common.unknown')}
-                        </span>{' '}
-                        <span className="text-xs text-slate-400">{order?.address}</span>
-                        {order?.deliveryWindowStart && order?.deliveryWindowEnd && (
-                          <span className="ml-1 whitespace-nowrap text-xs text-slate-400">
-                            {t('routes.windowBadge', {
-                              start: order.deliveryWindowStart,
-                              end: order.deliveryWindowEnd,
-                            })}
-                          </span>
-                        )}
-                      </span>
-                      <span className="ml-auto flex shrink-0 items-center gap-2">
-                        <span
-                          className={`whitespace-nowrap text-xs tabular-nums ${
-                            schedule
-                              ? late
-                                ? 'font-medium text-red-600'
-                                : 'text-slate-500'
-                              : 'text-slate-300'
-                          }`}
-                        >
-                          {entry
-                            ? late
-                              ? t('routes.etaLate', {
-                                  time: formatHhmm(entry.arrivalAt),
-                                  minutes: entry.lateMinutes,
-                                })
-                              : t('routes.etaLabel', { time: formatHhmm(entry.arrivalAt) })
-                            : t('routes.etaUnknown')}
+              <div className="flex min-h-[44px] items-center justify-between gap-2 md:min-h-0">
+                <h3 className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                  {t('routes.stopsTitle')}{' '}
+                  {isOptimized && (
+                    <span className="font-normal normal-case">{t('routes.optimizedSuffix')}</span>
+                  )}
+                </h3>
+                {/* Collapsible stop panel on phones */}
+                {isMobile && (
+                  <button
+                    type="button"
+                    onClick={() => setStopsOpen((open) => !open)}
+                    aria-expanded={stopsOpen}
+                    className="-mr-2 flex h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+                  >
+                    {stopsOpen ? t('routes.hideStops') : t('routes.showStops')}
+                    <span aria-hidden="true">{stopsOpen ? '▾' : '▸'}</span>
+                  </button>
+                )}
+              </div>
+              {(!isMobile || stopsOpen) && (
+                <>
+                  <ol className="space-y-1">
+                    <li className="flex items-center gap-2 text-sm">
+                      <span className="map-pin-wrapper flex">
+                        <span className="map-pin map-pin-depot" style={{ height: 22, width: 22, fontSize: 11 }}>
+                          🚚
                         </span>
-                        {inTransit ? (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => advanceOrder(order!)}
-                              className="rounded px-1.5 py-0.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50"
-                            >
-                              ✓ {t('status.order.delivered')}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => markOrderFailed(order!)}
-                              className="rounded px-1.5 py-0.5 text-xs font-medium text-red-600 transition hover:bg-red-50"
-                            >
-                              ✕ {t('status.order.failed')}
-                            </button>
-                          </>
-                        ) : (
-                          order?.status === 'assigned' && (
-                            <span className="text-xs text-slate-400">{t('routes.awaitingStart')}</span>
-                          )
-                        )}
                       </span>
+                      <span className="text-slate-500">{t('routes.depotRowLabel')}</span>
                     </li>
-                  )
-                })}
-              </ol>
-              <p className="mt-2 text-xs text-slate-400">
-                {driverOrders.some((order) => order.status === 'in_transit')
-                  ? t('routes.routeRunningHint')
-                  : t('routes.startRouteHint')}
-              </p>
+                    {displayedStops.map((stop, index) => {
+                      const order = orders.find((candidate) => candidate.id === stop.id)
+                      const inTransit = order?.status === 'in_transit'
+                      const entry = schedule?.entries.find(
+                        (candidate) => candidate.stopId === stop.id,
+                      )
+                      const late = (entry?.lateMinutes ?? 0) > 0
+                      return (
+                        <li
+                          key={stop.id}
+                          id={`stop-row-${stop.id}`}
+                          onClick={() => setFocusStopId(stop.id)}
+                          className="flex min-h-[44px] cursor-pointer flex-wrap items-center gap-x-2 gap-y-1 text-sm transition hover:bg-slate-50"
+                        >
+                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-sky-600 text-[11px] font-bold text-white">
+                            {index + 1}
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="font-medium text-slate-800">
+                              {order?.customerName ?? t('common.unknown')}
+                            </span>{' '}
+                            <span className="text-xs text-slate-400">{order?.address}</span>
+                            {order?.deliveryWindowStart && order?.deliveryWindowEnd && (
+                              <span className="ml-1 whitespace-nowrap text-xs text-slate-400">
+                                {t('routes.windowBadge', {
+                                  start: order.deliveryWindowStart,
+                                  end: order.deliveryWindowEnd,
+                                })}
+                              </span>
+                            )}
+                          </span>
+                          <span className="flex shrink-0 flex-wrap items-center gap-2">
+                            <span
+                              className={`whitespace-nowrap text-xs tabular-nums ${
+                                schedule
+                                  ? late
+                                    ? 'font-medium text-red-600'
+                                    : 'text-slate-500'
+                                  : 'text-slate-300'
+                              }`}
+                            >
+                              {entry
+                                ? late
+                                  ? t('routes.etaLate', {
+                                      time: formatHhmm(entry.arrivalAt),
+                                      minutes: entry.lateMinutes,
+                                    })
+                                  : t('routes.etaLabel', { time: formatHhmm(entry.arrivalAt) })
+                                : t('routes.etaUnknown')}
+                            </span>
+                            {inTransit ? (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={(event) => {
+                                    event.stopPropagation()
+                                    advanceOrder(order!)
+                                  }}
+                                  className="inline-flex min-h-[44px] items-center rounded px-2 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 md:min-h-0"
+                                >
+                                  ✓ {t('status.order.delivered')}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(event) => {
+                                    event.stopPropagation()
+                                    markOrderFailed(order!)
+                                  }}
+                                  className="inline-flex min-h-[44px] items-center rounded px-2 text-xs font-medium text-red-600 transition hover:bg-red-50 md:min-h-0"
+                                >
+                                  ✕ {t('status.order.failed')}
+                                </button>
+                              </>
+                            ) : (
+                              order?.status === 'assigned' && (
+                                <span className="text-xs text-slate-400">{t('routes.awaitingStart')}</span>
+                              )
+                            )}
+                          </span>
+                        </li>
+                      )
+                    })}
+                  </ol>
+                  <p className="mt-2 text-xs text-slate-400">
+                    {driverOrders.some((order) => order.status === 'in_transit')
+                      ? t('routes.routeRunningHint')
+                      : t('routes.startRouteHint')}
+                  </p>
+                </>
+              )}
             </div>
           )}
 

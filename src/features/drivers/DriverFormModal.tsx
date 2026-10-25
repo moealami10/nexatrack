@@ -60,8 +60,21 @@ export default function DriverFormModal({
   }
 
   return (
-    <Modal title={driver ? t('drivers.formTitleEdit') : t('drivers.formTitleAdd')} onClose={onClose}>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <Modal
+      title={driver ? t('drivers.formTitleEdit') : t('drivers.formTitleAdd')}
+      onClose={onClose}
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>
+            {t('common.cancel')}
+          </Button>
+          <Button type="submit" form="driver-form">
+            {driver ? t('common.saveChanges') : t('drivers.addDriver')}
+          </Button>
+        </>
+      }
+    >
+      <form id="driver-form" onSubmit={handleSubmit} className="flex flex-col gap-4">
         {error && (
           <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-inset ring-red-300">
             {error}
@@ -73,15 +86,18 @@ export default function DriverFormModal({
             onChange={(event) => setName(event.target.value)}
             placeholder={t('drivers.placeholderName')}
             className={inputClasses}
+            autoComplete="off"
             autoFocus
           />
         </Field>
         <Field label={t('drivers.fieldPhone')}>
           <input
+            type="tel"
             value={phone}
             onChange={(event) => setPhone(event.target.value)}
             placeholder={t('drivers.placeholderPhone')}
             className={inputClasses}
+            autoComplete="off"
           />
         </Field>
         <Field label={t('drivers.fieldVehicle')}>
@@ -90,16 +106,9 @@ export default function DriverFormModal({
             onChange={(event) => setVehicle(event.target.value)}
             placeholder={t('drivers.placeholderVehicle')}
             className={inputClasses}
+            autoComplete="off"
           />
         </Field>
-        <div className="flex justify-end gap-2">
-          <Button variant="secondary" onClick={onClose}>
-            {t('common.cancel')}
-          </Button>
-          <Button type="submit">
-            {driver ? t('common.saveChanges') : t('drivers.addDriver')}
-          </Button>
-        </div>
       </form>
     </Modal>
   )

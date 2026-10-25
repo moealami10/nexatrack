@@ -23,14 +23,14 @@ export function StatCard({
   accent?: StatAccent
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-center gap-3">
+    <div className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <div className="flex min-w-0 items-center gap-2 sm:gap-3">
         <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-lg ${ACCENT_CLASSES[accent]}`}>
           {icon}
         </span>
-        <span className="text-sm font-medium text-slate-500">{label}</span>
+        <span className="min-w-0 truncate text-xs font-medium text-slate-500 sm:text-sm">{label}</span>
       </div>
-      <p className="mt-4 text-3xl font-semibold tracking-tight text-slate-900">{value}</p>
+      <p className="mt-3 truncate text-2xl font-semibold tracking-tight text-slate-900 sm:mt-4 sm:text-3xl">{value}</p>
       {hint && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
     </div>
   )

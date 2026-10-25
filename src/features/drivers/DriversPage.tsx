@@ -100,7 +100,7 @@ export default function DriversPage() {
             type="button"
             onClick={() => setNotice(null)}
             aria-label={t('drivers.dismiss')}
-            className="ml-4 text-slate-400 transition hover:text-slate-600"
+            className="-mr-1 -my-2 flex h-11 w-11 items-center justify-center text-slate-400 transition hover:text-slate-600 md:h-6 md:w-6"
           >
             ✕
           </button>

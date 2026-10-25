@@ -18,6 +18,7 @@ import { StatCard } from '@/components/ui/StatCard'
 import { formatDateTime, formatCurrency } from '@/lib/format'
 import { buildProductIndex, getOrderTotal, summarizeOrderItems } from '@/lib/orders'
 import { ORDER_STATUS_TONE, orderStatusLabel } from '@/lib/status'
+import { useIsMobile } from '@/lib/useIsMobile'
 import { db, useCollection } from '@/lib/store'
 import type { OrderStatus } from '@/types'
 
@@ -35,6 +36,7 @@ const STATUS_COLORS: Record<OrderStatus, string> = {
 
 export default function DashboardPage() {
   const { t } = useTranslation()
+  const isMobile = useIsMobile()
   const products = useCollection(db.products)
   const inventory = useCollection(db.inventory)
   const orders = useCollection(db.orders)
@@ -73,7 +75,8 @@ export default function DashboardPage() {
         description={t('dashboard.description')}
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* 2-col KPI grid on phones, unchanged 4-col from `lg` up */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard icon="🧾" label={t('dashboard.ordersToday')} value={ordersToday} accent="sky" />
         <StatCard
           icon="✅"
@@ -147,11 +150,24 @@ export default function DashboardPage() {
           </h2>
           <div className="mt-4 h-60 min-w-0 overflow-hidden">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+              <BarChart
+                data={chartData}
+                margin={
+                  isMobile
+                    ? { top: 8, right: 8, left: -24, bottom: 24 }
+                    : { top: 8, right: 8, left: -18, bottom: 0 }
+                }
+              >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis
                   dataKey="name"
-                  tick={{ fontSize: 12, fill: '#64748b' }}
+                  /* Phone: long French labels rotate so 6 statuses don't collide. */
+                  tick={
+                    isMobile
+                      ? { fontSize: 11, fill: '#64748b', angle: -35, textAnchor: 'end' as const }
+                      : { fontSize: 12, fill: '#64748b' }
+                  }
+                  height={isMobile ? 76 : undefined}
                   axisLine={false}
                   tickLine={false}
                   interval={0}
