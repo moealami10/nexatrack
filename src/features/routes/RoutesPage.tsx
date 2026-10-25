@@ -208,13 +208,16 @@ export default function RoutesPage() {
 
   // Real road geometry for the displayed order (optimized or not), cached
   // inside roadRouting; dashed straight legs are the fallback rendering.
+  // The sequence is a ROUND TRIP (depot → stops → depot): a single stop
+  // still draws its out-and-back leg, and multi-stop paths include the
+  // final leg home so the drawn line matches the round-trip metrics.
   const roadKey = displayedStops.map((stop) => stop.id).join('|')
   useEffect(() => {
-    if (!driverId || displayedStops.length < 2) {
+    if (!driverId || displayedStops.length < 1) {
       setRoadPath(null)
       return
     }
-    const points: GeoPoint[] = [DEPOT, ...displayedStops]
+    const points: GeoPoint[] = [DEPOT, ...displayedStops, DEPOT]
     let cancelled = false
     setRoadPath(null)
     getRouteGeometry(points)

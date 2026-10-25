@@ -120,7 +120,7 @@ export default function RouteMap({
         </Marker>
       ))}
 
-      {stops.length >= 2 &&
+      {stops.length >= 1 &&
         (beforePositions ? (
           <>
             <Polyline
