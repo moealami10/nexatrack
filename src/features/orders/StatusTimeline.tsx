@@ -9,6 +9,13 @@ const STEPS = ['pending', 'assigned', 'in_transit', 'delivered'] as const satisf
 
 type StepStatus = (typeof STEPS)[number]
 
+/** Extract reached progression steps from statusHistory (filters to STEPS only). */
+function getReachedSteps(order: Order): StepStatus[] {
+  return (order.statusHistory ?? [])
+    .map((event) => event.status)
+    .filter((status): status is StepStatus => STEPS.includes(status as StepStatus))
+}
+
 /** Reached steps are solid in their own color; the current one is outlined. */
 const DONE_DOT: Record<StepStatus, string> = {
   pending: 'bg-amber-500',
@@ -36,15 +43,12 @@ export function StatusTimeline({ order }: { order: Order }) {
   const timestamps = historyIndex(order)
   const placedAt = timestamps.get('pending') ?? order.createdAt
 
-  const reached: OrderStatus[] = isFailed
-    ? order.driverId
-      ? ['pending', 'assigned']
-      : ['pending']
-    : order.status === 'cancelled'
-      ? ['pending']
-      : currentIndex < 0
-        ? [] // defensive: unknown status shows the plain steps
-        : STEPS.slice(0, currentIndex)
+  // Use actual status history to determine reached steps for terminal orders
+  const reached: StepStatus[] = isTerminal
+    ? getReachedSteps(order)
+    : currentIndex < 0
+      ? [] // defensive: unknown status shows the plain steps
+      : STEPS.slice(0, currentIndex)
 
   const rows = STEPS.map((status) => ({
     status,

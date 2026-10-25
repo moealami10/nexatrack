@@ -18,7 +18,7 @@
 import { haversineKm, type GeoPoint, type TravelMatrix } from './routing'
 
 const DEFAULT_OSRM_URL = 'https://router.project-osrm.org'
-const REQUEST_TIMEOUT_MS = 5_000
+const REQUEST_TIMEOUT_MS = 10_000
 /** Coordinate precision used for cache keys and OSRM requests. */
 const COORDINATE_PRECISION = 6
 

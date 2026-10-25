@@ -123,6 +123,7 @@
     "blockedNoStockQtyShort": "Set a stock quantity above zero first — orders are blocked without stock",
     "blockedNoStockQtyInfo": "Set at least one product’s stock above zero to create orders.",
     "view": "View →",
+    "viewOrder": "View order {{id}} for {{customer}}",
     "count_one": "{{count}} order",
     "count_other": "{{count}} orders",
     "itemsCount_one": "{{count}} item",
@@ -140,11 +141,13 @@
     "fieldAddress": "Address",
     "fieldLat": "Latitude",
     "fieldLng": "Longitude",
+    "mapHint": "Click on the map to set the delivery location. Drag to pan.",
     "fieldWindowStart": "Window start (optional)",
     "fieldWindowEnd": "Window end (optional)",
     "fieldService": "Service min.",
     "fieldNamePlaceholder": "Anas Haddadi",
     "fieldAddressPlaceholder": "31 Av. Mekka, Bréma",
+    "addressOptional": "Optional — click the map to set coordinates instead",
     "itemsTitle": "Items",
     "productAria": "Product",
     "quantityAria": "Quantity",
@@ -172,7 +175,9 @@
     "timelineTerminalFailed": "Delivery failed",
     "timelineTerminalCancelled": "Order cancelled",
     "timelinePlaced": "Placed {{date}}",
-    "farFromDepot": "This point is about {{km}} km from the depot in {{city}} — double-check the coordinates."
+    "farFromDepot": "This point is about {{km}} km from the depot in {{city}} — double-check the coordinates.",
+    "addProductsFirst": "Add at least one product before creating orders.",
+    "goToProducts": "Go to Products →"
   },
   "drivers": {
     "title": "Drivers",
@@ -291,11 +296,13 @@
     "autoAssignNoDrivers": "No available drivers right now.",
     "autoAssignFailed": "Could not assign any pending orders.",
     "assignFailed": "Could not assign the orders.",
-    "orderFieldsRequired": "Customer name, address, and at least one item are required.",
+    "orderFieldsRequired": "Customer name and at least one item are required.",
     "windowIncomplete": "The delivery window needs both a start and an end time.",
     "windowInvalid": "The delivery window must end after it starts.",
     "serviceRange": "Service time must be between 0 and 240 minutes.",
-    "driverNameRequired": "The driver needs a name."
+    "driverNameRequired": "The driver needs a name.",
+    "geocoding": "Looking up address…",
+    "geocodingFailed": "Could not look up address. You can type it manually."
   },
   "toasts": {
     "undoButton": "↩ Undo",

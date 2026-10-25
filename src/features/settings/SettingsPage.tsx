@@ -133,7 +133,7 @@ export default function SettingsPage() {
         </p>
 
         {/* Click-to-place depot map, centered on the current position */}
-        <div className="h-64 overflow-hidden rounded-xl border border-slate-200 shadow-sm">
+        <div className="relative z-0 isolate h-64 overflow-hidden rounded-xl border border-slate-200 shadow-sm">
           <MapContainer
             center={depotMarker}
             zoom={15}

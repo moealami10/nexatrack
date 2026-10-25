@@ -46,7 +46,7 @@ export interface OrderItem {
 export interface Order {
   id: string
   customerName: string
-  address: string
+  address?: string
   lat: number
   lng: number
   items: OrderItem[]

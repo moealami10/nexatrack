@@ -123,6 +123,7 @@
     "blockedNoStockQtyShort": "Définissez d'abord une quantité en stock supérieure à zéro — les commandes sont bloquées sans stock",
     "blockedNoStockQtyInfo": "Définissez un stock supérieur à zéro pour au moins un produit afin de créer des commandes.",
     "view": "Voir →",
+    "viewOrder": "Voir la commande {{id}} pour {{customer}}",
     "count_one": "{{count}} commande",
     "count_other": "{{count}} commandes",
     "itemsCount_one": "{{count}} article",
@@ -140,11 +141,13 @@
     "fieldAddress": "Adresse",
     "fieldLat": "Latitude",
     "fieldLng": "Longitude",
+    "mapHint": "Cliquez sur la carte pour définir le lieu de livraison. Glissez pour déplacer.",
     "fieldWindowStart": "Début de créneau (facultatif)",
     "fieldWindowEnd": "Fin de créneau (facultatif)",
     "fieldService": "Service (min)",
     "fieldNamePlaceholder": "Anas Haddadi",
     "fieldAddressPlaceholder": "31 Av. Mekka, Bréma",
+    "addressOptional": "Facultatif — cliquez sur la carte pour définir les coordonnées",
     "itemsTitle": "Articles",
     "productAria": "Produit",
     "quantityAria": "Quantité",
@@ -172,7 +175,9 @@
     "timelineTerminalFailed": "Livraison en échec",
     "timelineTerminalCancelled": "Commande annulée",
     "timelinePlaced": "Passée le {{date}}",
-    "farFromDepot": "Ce point est à environ {{km}} km du dépôt à {{city}} — vérifiez les coordonnées."
+    "farFromDepot": "Ce point est à environ {{km}} km du dépôt à {{city}} — vérifiez les coordonnées.",
+    "addProductsFirst": "Ajoutez au moins un produit avant de créer des commandes.",
+    "goToProducts": "Aller aux Produits →"
   },
   "drivers": {
     "title": "Livreurs",
@@ -291,11 +296,13 @@
     "autoAssignNoDrivers": "Aucun livreur disponible pour le moment.",
     "autoAssignFailed": "Impossible d'affecter des commandes en attente.",
     "assignFailed": "Impossible d'affecter les commandes.",
-    "orderFieldsRequired": "Le nom du client, l'adresse et au moins un article sont obligatoires.",
+    "orderFieldsRequired": "Le nom du client et au moins un article sont obligatoires.",
     "windowIncomplete": "Le créneau de livraison exige une heure de début et une heure de fin.",
     "windowInvalid": "Le créneau de livraison doit se terminer après son début.",
     "serviceRange": "La durée de service doit être comprise entre 0 et 240 minutes.",
-    "driverNameRequired": "Le livreur doit avoir un nom."
+    "driverNameRequired": "Le livreur doit avoir un nom.",
+    "geocoding": "Recherche de l'adresse…",
+    "geocodingFailed": "Impossible de trouver l'adresse. Vous pouvez la saisir manuellement."
   },
   "toasts": {
     "undoButton": "↩ Annuler",

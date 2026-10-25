@@ -43,7 +43,7 @@ export default function OrderDetailDrawer({
   const productIndex = buildProductIndex(products)
   const assignedDriver = drivers.find((driver) => driver.id === order.driverId)
   const candidates = drivers.filter(
-    (driver) => driver.status !== 'off_duty' && driver.id !== order.driverId,
+    (driver) => driver.status !== 'off_duty',
   )
 
   const nextLabel: string | null =
@@ -118,10 +118,15 @@ export default function OrderDetailDrawer({
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-slate-900">{order.customerName}</h3>
         <Badge>{orderStatusLabel(order.status)}</Badge>
-      </div>      <p className="mt-1 text-sm text-slate-500">{order.address}</p>
-      <p className="text-xs text-slate-400">
-        {order.lat.toFixed(4)}, {order.lng.toFixed(4)}
+      </div>
+      <p className="mt-1 text-sm text-slate-500">
+        {order.address || `${order.lat.toFixed(4)}, ${order.lng.toFixed(4)}`}
       </p>
+      {order.address && (
+        <p className="text-xs text-slate-400 font-mono">
+          {order.lat.toFixed(4)}, {order.lng.toFixed(4)}
+        </p>
+      )}
       {(order.deliveryWindowStart || order.serviceMinutes != null) && (
         <p className="mt-2 text-sm text-slate-600">
           {order.deliveryWindowStart && order.deliveryWindowEnd && (

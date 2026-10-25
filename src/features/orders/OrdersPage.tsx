@@ -37,16 +37,21 @@ export default function OrdersPage() {
   const driverName = (driverId?: string) =>
     drivers.find((driver) => driver.id === driverId)?.name ?? '—'
 
-  const query = search.trim().toLowerCase()
+  /** Normalize string for accent-insensitive comparison: NFD + remove combining marks + lowercase. */
+  function normalizeForSearch(str: string): string {
+    return str.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+  }
+
+  const query = normalizeForSearch(search.trim())
   const visibleOrders = [...orders]
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .filter(
       (order) =>
         (filter === 'all' || order.status === filter) &&
         (!query ||
-          order.customerName.toLowerCase().includes(query) ||
-          order.address.toLowerCase().includes(query) ||
-          order.id.toLowerCase().includes(query)),
+          normalizeForSearch(order.customerName).includes(query) ||
+          normalizeForSearch(order.address).includes(query) ||
+          normalizeForSearch(order.id).includes(query)),
     )
 
   const countFor = (status: Filter) =>
@@ -61,6 +66,33 @@ export default function OrdersPage() {
     { key: 'failed', label: orderStatusLabel('failed') },
     { key: 'cancelled', label: orderStatusLabel('cancelled') },
   ]
+
+  // Determine empty state configuration
+  type EmptyStateMode = 'no-orders' | 'no-match' | null
+
+  interface EmptyStateConfig {
+    mode: EmptyStateMode
+    canCreate: boolean
+    blockReason?: 'no-products' | 'no-stock'
+  }
+
+  function getEmptyStateConfig(): EmptyStateConfig {
+    if (orders.length === 0) {
+      const noProducts = products.length === 0
+      const noStock = !noProducts && !inventory.some((item) => item.quantity > 0)
+      return {
+        mode: 'no-orders',
+        canCreate: !noProducts && !noStock,
+        blockReason: noProducts ? 'no-products' : noStock ? 'no-stock' : undefined,
+      }
+    }
+    if (visibleOrders.length === 0) {
+      return { mode: 'no-match', canCreate: false }
+    }
+    return { mode: null, canCreate: true }
+  }
+
+  const emptyState = getEmptyStateConfig()
 
   return (
     <>
@@ -103,52 +135,46 @@ export default function OrdersPage() {
         })}
       </div>
 
-      {orders.length === 0 ? (
-        (() => {
-          const noProducts = products.length === 0
-          const noStock = !noProducts && !inventory.some((item) => item.quantity > 0)
-          const canCreate = !noProducts && !noStock
-          return (
-            <EmptyState
-              icon="🧾"
-              message={t('orders.noOrders')}
-              action={
-                <div className="flex flex-col items-center gap-2">
-                  <Button
-                    onClick={() => setModalOpen(true)}
-                    disabled={!canCreate}
-                    title={
-                      noProducts
-                        ? t('orders.blockedNoStockShort')
-                        : noStock
-                          ? t('orders.blockedNoStockQtyShort')
-                          : undefined
-                    }
-                  >
-                    {t('orders.addNew')}
-                  </Button>
-                  {!canCreate && (
-                    <p className="max-w-xs text-center text-xs text-slate-400">
-                      {noProducts
-                        ? t('orders.blockedNoStockInfo')
-                        : t('orders.blockedNoStockQtyInfo')}
-                    </p>
-                  )}
-                </div>
-              }
-            />
-          )
-        })()
-      ) : visibleOrders.length === 0 ? (
+      {emptyState.mode === 'no-orders' && (
+        <EmptyState
+          icon="🧾"
+          message={t('orders.noOrders')}
+          action={
+            <div className="flex flex-col items-center gap-2">
+              <Button
+                onClick={() => setModalOpen(true)}
+                disabled={!emptyState.canCreate}
+                title={emptyState.blockReason === 'no-products'
+                  ? t('orders.blockedNoStockShort')
+                  : emptyState.blockReason === 'no-stock'
+                  ? t('orders.blockedNoStockQtyShort')
+                  : undefined}
+              >
+                {t('orders.addNew')}
+              </Button>
+              {!emptyState.canCreate && (
+                <p className="max-w-xs text-center text-xs text-slate-400">
+                  {emptyState.blockReason === 'no-products'
+                    ? t('orders.blockedNoStockInfo')
+                    : t('orders.blockedNoStockQtyInfo')}
+                </p>
+              )}
+            </div>
+          }
+        />
+      )}
+      {emptyState.mode === 'no-match' && (
         <EmptyState icon="🔍" message={t('orders.noMatchFilter')} />
-      ) : isMobile ? (
+      )}
+      {emptyState.mode === null && isMobile && (
         /* Phone: tappable cards open the detail sheet. */
         <ul className="flex flex-col gap-3">
           {visibleOrders.map((order) => (
-            <li
+            <button
               key={order.id}
               onClick={() => setDetailId(order.id)}
-              className="cursor-pointer rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:bg-slate-50"
+              className="cursor-pointer rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:bg-slate-50 text-left w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+              aria-label={t('orders.viewOrder', { id: order.id, customer: order.customerName })}
             >
               <div className="flex items-start justify-between gap-2">
                 <span className="font-mono text-xs text-slate-500">{order.id}</span>
@@ -162,7 +188,9 @@ export default function OrdersPage() {
                   {formatCurrency(getOrderTotal(order, productIndex))}
                 </span>
               </div>
-              <p className="mt-0.5 truncate text-sm text-slate-500">{order.address}</p>
+              <p className="mt-0.5 truncate text-sm text-slate-500">
+                {order.address || `${order.lat.toFixed(4)}, ${order.lng.toFixed(4)}`}
+              </p>
               <div className="mt-2 flex items-center justify-between gap-2 border-t border-slate-100 pt-2 text-xs text-slate-400">
                 <span className="truncate">
                   {summarizeOrderItems(order, productIndex, t('common.unknownItem'))}
@@ -173,10 +201,11 @@ export default function OrdersPage() {
                   <span className="font-medium text-slate-600">{t('orders.view')}</span>
                 </span>
               </div>
-            </li>
+            </button>
           ))}
         </ul>
-      ) : (
+      )}
+      {emptyState.mode === null && !isMobile && (
         <Table
           columns={[
             t('orders.columnOrder'),
@@ -191,11 +220,7 @@ export default function OrdersPage() {
           ]}
         >
           {visibleOrders.map((order) => (
-            <tr
-              key={order.id}
-              onClick={() => setDetailId(order.id)}
-              className="cursor-pointer transition hover:bg-slate-50"
-            >
+            <tr key={order.id} className="transition hover:bg-slate-50">
               <Td className="font-mono text-xs text-slate-500">{order.id}</Td>
               <Td className="font-medium">{order.customerName}</Td>
               <Td className="text-slate-500">
@@ -216,7 +241,13 @@ export default function OrdersPage() {
               <Td className="text-slate-500">{formatDate(order.createdAt)}</Td>
               <Td>{formatCurrency(getOrderTotal(order, productIndex))}</Td>
               <Td className="text-right">
-                <span className="text-sm font-medium text-slate-600">{t('orders.view')}</span>
+                <button
+                  onClick={() => setDetailId(order.id)}
+                  className="text-sm font-medium text-slate-600 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 rounded px-1"
+                  aria-label={t('orders.viewOrder', { id: order.id, customer: order.customerName })}
+                >
+                  {t('orders.view')}
+                </button>
               </Td>
             </tr>
           ))}
