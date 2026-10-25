@@ -306,7 +306,7 @@ export default function NewOrderModal({ onClose }: { onClose: () => void }) {
               value={windowStart}
               onChange={(event) => setWindowStart(event.target.value)}
               className={`${inputClasses} ${windowErrorKey && windowStart ? 'ring-red-500 border-red-300' : ''}`}
-              aria-invalid={windowErrorKey && !!windowStart}
+              aria-invalid={windowErrorKey && windowStart ? 'true' : 'false'}
               aria-describedby={windowErrorKey && windowStart ? 'window-start-error' : undefined}
               max={windowEnd || undefined}
             />
@@ -322,7 +322,7 @@ export default function NewOrderModal({ onClose }: { onClose: () => void }) {
               value={windowEnd}
               onChange={(event) => setWindowEnd(event.target.value)}
               className={`${inputClasses} ${windowErrorKey && windowEnd ? 'ring-red-500 border-red-300' : ''}`}
-              aria-invalid={windowErrorKey && !!windowEnd}
+              aria-invalid={windowErrorKey && windowEnd ? 'true' : 'false'}
               aria-describedby={windowErrorKey && windowEnd ? 'window-end-error' : undefined}
               min={windowStart || undefined}
             />

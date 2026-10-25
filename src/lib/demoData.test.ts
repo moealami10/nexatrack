@@ -45,7 +45,7 @@ describe('demo data location', () => {
       expect(order.lng).toBeGreaterThan(location.bounds.minLng)
       expect(order.lng).toBeLessThan(location.bounds.maxLng)
       expect(isCasablancaText(order.customerName)).toBe(false)
-      expect(isCasablancaText(order.address)).toBe(false)
+      expect(isCasablancaText(order.address ?? '')).toBe(false)
     }
   })
 })

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import type { Driver, InventoryItem, Order, Product } from '@/types'
+import type { Driver, Order, Product } from '@/types'
 
 import { syncDriverStatusAfterOrderEvent, startDriverRoute, isActiveAssignment } from './dispatch'
 import {
@@ -299,9 +299,8 @@ describe('driver route automation', () => {
   })
 
   it('startDriverRoute with nothing assigned does nothing (no entry, no status change)', async () => {
-    const { product } = makeProduct()
-    const amine = makeDriver('Amine', 'available')
     makeProduct() // ensure some data exists so an empty run is meaningful
+    const amine = makeDriver('Amine', 'available')
     const before = history.stats()
 
     const result = startDriverRoute(amine.id)

@@ -506,7 +506,7 @@ function orderHasInvalidLocation(order: Order): boolean {
   ) {
     return true
   }
-  if (isCasablancaText(order.customerName) || isCasablancaText(order.address)) {
+  if (isCasablancaText(order.customerName) || isCasablancaText(order.address ?? '')) {
     return true
   }
   return false

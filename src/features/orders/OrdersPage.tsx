@@ -42,6 +42,11 @@ export default function OrdersPage() {
     return str.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
   }
 
+  /** Safe normalize that handles undefined strings. */
+  function safeNormalize(str?: string): string {
+    return str ? normalizeForSearch(str) : ''
+  }
+
   const query = normalizeForSearch(search.trim())
   const visibleOrders = [...orders]
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
@@ -50,7 +55,7 @@ export default function OrdersPage() {
         (filter === 'all' || order.status === filter) &&
         (!query ||
           normalizeForSearch(order.customerName).includes(query) ||
-          normalizeForSearch(order.address).includes(query) ||
+          safeNormalize(order.address).includes(query) ||
           normalizeForSearch(order.id).includes(query)),
     )
 

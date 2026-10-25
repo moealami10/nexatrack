@@ -162,8 +162,8 @@ describe('undo/redo of every order action', () => {
 
   it('auto-assign: batch is one entry; undo restores every order + driver statuses', async () => {
     const product = seedProduct()
-    const amine = seedDriver('Amine', 'available')
-    const sara = seedDriver('Sara', 'available')
+    seedDriver('Amine', 'available')
+    seedDriver('Sara', 'available')
     const orders = [seedOrder(product, 'P1'), seedOrder(product, 'P2'), seedOrder(product, 'P3')]
     await tick()
 

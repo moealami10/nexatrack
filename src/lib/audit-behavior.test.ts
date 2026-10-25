@@ -1,6 +1,6 @@
-import { beforeEach, describe, expect, it } from 'vitest'
-import { clearAllData, db, runTransaction } from './store'
-import { tryCreateOrder, markOrderFailed, cancelOrder, reactivateOrder, advanceOrder } from './orders'
+import { beforeEach, describe, it } from 'vitest'
+import { clearAllData, db } from './store'
+import { tryCreateOrder, markOrderFailed, reactivateOrder, advanceOrder } from './orders'
 import { installDemoData } from './demoData'
 
 function mkOrder(overrides: any = {}) {

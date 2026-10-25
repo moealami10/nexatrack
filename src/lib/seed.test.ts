@@ -60,7 +60,7 @@ describe('seed integrity', () => {
     const coordSet = new Set<string>()
     for (const order of orders) {
       expect(order.customerName.length).toBeGreaterThan(0)
-      expect(order.address.length).toBeGreaterThan(0)
+      expect(order.address?.length ?? 0).toBeGreaterThan(0)
       expect(order.items.length).toBeGreaterThan(0)
       for (const item of order.items) {
         expect(productIds.has(item.productId)).toBe(true)
@@ -80,7 +80,7 @@ describe('seed integrity', () => {
   })
 
   it('has orders spread across at least 6 neighborhoods (distinct address prefixes)', () => {
-    const quarters = new Set(orders.map((order) => order.address.split(',')[0]?.trim()))
+    const quarters = new Set(orders.map((order) => order.address?.split(',')[0]?.trim()))
     expect(quarters.size).toBeGreaterThanOrEqual(6)
   })
 
