@@ -1,4 +1,5 @@
-import { writeFileSync } from 'node:fs'
+import { mkdirSync, writeFileSync } from 'node:fs'
+import { dirname } from 'node:path'
 
 import { describe, expect, it } from 'vitest'
 
@@ -12,12 +13,14 @@ import { seedDrivers, seedInventory, seedOrders, seedProducts } from '@/lib/seed
  */
 describe('dump seed data', () => {
   it('writes the demo dataset as JSON', () => {
+    const target = new URL('../e2e/seed.json', import.meta.url)
+    mkdirSync(dirname(target.pathname), { recursive: true })
     writeFileSync(
-      new URL('../e2e/seed.json', import.meta.url),
+      target,
       JSON.stringify({
-        products: seedProducts,
+        products: seedProducts('en'),
         inventory: seedInventory,
-        orders: seedOrders,
+        orders: seedOrders(),
         drivers: seedDrivers,
         routePlans: [],
       }),
